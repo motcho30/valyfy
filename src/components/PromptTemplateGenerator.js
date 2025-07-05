@@ -1,7 +1,9 @@
 import React, { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useProjectFiles } from '../hooks/useProjectFiles';
 
 const PromptTemplateGenerator = ({ onClose, project = null }) => {
+  const { saveGeneratedFile, loading: isSaving } = useProjectFiles();
   const [availableTags, setAvailableTags] = useState([
     { id: 1, name: 'Landing Page', color: 'bg-blue-100 text-blue-700' },
     { id: 2, name: 'User Authentication', color: 'bg-green-100 text-green-700' },
@@ -134,6 +136,21 @@ const LandingPage = () => {
 - Proper state management`;
 
       setGeneratedPrompt(prompt);
+
+      // Persist prompt to localStorage for later overview display
+      if (project && project.id) {
+        try {
+          await saveGeneratedFile(project.id, {
+            fileName: `${tag.name.replace(/\s+/g, '-')}-prompt.md`,
+            fileType: 'Prompt Template',
+            content: prompt,
+            metadata: { feature: tag.name }
+          });
+        } catch (error) {
+          console.error("Failed to save prompt to database", error);
+          // Optional: notify user that saving failed
+        }
+      }
     } catch (error) {
       setGeneratedPrompt('Error generating prompt. Please try again.');
     } finally {

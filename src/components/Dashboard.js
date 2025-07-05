@@ -290,9 +290,7 @@ const Dashboard = ({ projects = [], loading = false, onNavigateToFeature, onNavi
         <div className="h-32"></div>
       </main>
       
-      {/* Debug Info - only shows in development */}
-      <DebugInfo projects={projects} loading={loading} />
-      <TestSupabaseButton />
+
     </div>
   );
 };

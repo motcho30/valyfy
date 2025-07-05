@@ -1,17 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import Header from './components/Header';
 import Hero from './components/Hero';
-import CursorRulesGenerator from './components/CursorRulesGenerator';
 import PRDGenerator from './components/PRDGenerator';
 import FeatureExtractor from './components/FeatureExtractor';
-import CursorTutorial from './components/CursorTutorial';
 import Dashboard from './components/Dashboard';
 import ProjectCreationFlow from './components/ProjectCreationFlow';
 import ProjectDetail from './components/ProjectDetail';
 import Auth from './components/Auth';
 import DatabaseSetup from './components/DatabaseSetup';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
+import FilesGuidance from './components/FilesGuidance';
 import './index.css';
+import { projectService } from './services/projectService';
+import { generateDesignSpecDocument } from './services/designSpecService';
 
 function AppContent() {
   const [currentView, setCurrentView] = useState('home');
@@ -129,6 +130,14 @@ function AppContent() {
     };
   }, [isAuthenticated, user]);
 
+  useEffect(() => {
+    const handleNavigateGuidance = () => setCurrentView('files-guidance');
+    window.addEventListener('navigate-files-guidance', handleNavigateGuidance);
+    return () => {
+      window.removeEventListener('navigate-files-guidance', handleNavigateGuidance);
+    };
+  }, []);
+
   const handleNavigateToFeature = (feature, project = null) => {
     setCurrentProject(project);
     setCurrentView(feature);
@@ -236,22 +245,14 @@ function AppContent() {
       // Save generated files to Supabase if they exist
       if (projectData.generatedFiles && projectData.generatedFiles.length > 0) {
         console.log('💾 Attempting to save', projectData.generatedFiles.length, 'generated files to Supabase');
-        console.log('📋 Project ID for files:', createdProject.id);
         
-        // Save files one by one with detailed logging
         const savedFiles = [];
         for (const file of projectData.generatedFiles) {
           try {
-            console.log('📝 Processing file:', file.name, 'type:', file.type);
-            console.log('📊 File content length:', file.content?.length || 0, 'characters');
-            
             const fileData = {
-              project_id: createdProject.id,
-              file_name: file.name,
-              file_type: file.type,
+              fileName: file.name,
+              fileType: file.type,
               content: file.content,
-              file_content: file.content, // Save to both fields for compatibility
-              file_size: file.content?.length || 0,
               metadata: {
                 original_id: file.id,
                 icon: file.icon,
@@ -260,62 +261,49 @@ function AppContent() {
               }
             };
             
-            console.log('📦 Prepared file data for:', file.name);
-            console.log('🔍 File data structure:', {
-              project_id: fileData.project_id,
-              file_name: fileData.file_name,
-              file_type: fileData.file_type,
-              content_length: fileData.content?.length,
-              file_size: fileData.file_size,
-              has_metadata: !!fileData.metadata
-            });
-            
-            const { data: savedFile, error: fileError } = await db.createProjectFile(fileData);
-            
-            if (fileError) {
-              console.error('❌ Failed to save file:', file.name);
-              console.error('📊 Error details:', {
-                message: fileError.message,
-                code: fileError.code,
-                details: fileError.details,
-                hint: fileError.hint
-              });
-              // Don't throw, continue with other files
-            } else {
-              console.log('✅ Successfully saved file:', file.name, 'with ID:', savedFile?.id);
-              savedFiles.push(savedFile);
-            }
-          } catch (fileException) {
-            console.error('💥 Exception saving file:', file.name, fileException);
-            // Continue with other files
+            const savedFile = await projectService.saveGeneratedFile(createdProject.id, fileData);
+            savedFiles.push(savedFile);
+            console.log('✅ Successfully saved file:', file.name, 'with ID:', savedFile?.id);
+          } catch (fileError) {
+            console.error('❌ Failed to save file:', file.name, fileError);
           }
         }
         
         console.log('📊 File saving summary: saved', savedFiles.length, 'out of', projectData.generatedFiles.length, 'files');
-        
-        // Verify files were actually saved by querying them back
-        if (savedFiles.length > 0) {
-          console.log('🔍 Verifying saved files by querying them back...');
+      
+        // Automatically save design spec if a design was selected
+        if (createdProject.design_data) {
           try {
-            const { data: verifyFiles, error: verifyError } = await db.getProjectFiles(createdProject.id);
-            if (verifyError) {
-              console.error('❌ Error verifying files:', verifyError);
-            } else {
-              console.log('✅ Verification: found', verifyFiles?.length || 0, 'files in database');
-              if (verifyFiles?.length > 0) {
-                verifyFiles.forEach(file => {
-                  console.log('📝 Verified file:', {
-                    id: file.id,
-                    name: file.file_name,
-                    type: file.file_type,
-                    content_length: file.content?.length || file.file_content?.length || 0
-                  });
-                });
+            const designSpecContent = generateDesignSpecDocument(createdProject.design_data, createdProject.name);
+            const fileData = {
+              fileName: 'design-specification.md',
+              fileType: 'Design Spec',
+              content: designSpecContent,
+              metadata: {
+                design_theme: createdProject.design_data.name,
+                creation_source: 'project_creation_flow'
               }
+            };
+            const savedFile = await projectService.saveGeneratedFile(createdProject.id, fileData);
+            console.log('✅ Successfully saved design specification file with ID:', savedFile?.id);
+
+            // Add the design spec to the project's files for immediate UI update
+            if (savedFile) {
+              projectData.generatedFiles.push({
+                id: savedFile.id,
+                name: savedFile.name,
+                type: savedFile.type,
+                content: savedFile.content,
+                date: new Date(savedFile.createdAt).toISOString().split('T')[0],
+                size: `${Math.round(savedFile.content.length / 1024)}KB`,
+                icon: 'Palette'
+              });
             }
-          } catch (verifyException) {
-            console.error('💥 Exception verifying files:', verifyException);
+          } catch (designSpecError) {
+            console.error('❌ Failed to save design specification file:', designSpecError);
           }
+        } else {
+          console.log('💾 No generated files to save');
         }
       } else {
         console.log('💾 No generated files to save');
@@ -451,45 +439,33 @@ function AppContent() {
       }
 
       // Save to Supabase
-      const { db } = await import('./services/supabase');
-      
-      // Check if this is a Supabase project (numeric ID) or local project
       const isSupabaseProject = !projectId.toString().startsWith('local-');
       
       if (isSupabaseProject) {
-        // Save file to Supabase
-        const fileData = {
-          project_id: projectId,
-          file_name: fileName,
-          file_type: fileType,
-          content: content,
-          file_content: content, // Save to both fields
-          file_size: content.length,
-          metadata: {
-            icon: fileType === 'PRD Document' ? 'FileText' : 'Code',
-            generated_individually: true,
-            created_via: 'individual_generation'
-          }
-        };
-
-        // Check if file already exists
-        const { data: existingFiles } = await db.getProjectFiles(projectId);
-        const existingFile = existingFiles?.find(f => f.file_type === fileType);
+        const { data: existingFiles } = await projectService.getProjectFiles(projectId);
+        const existingFile = existingFiles?.find(f => f.type === fileType);
         
         if (existingFile) {
           // Update existing file
-          const { error } = await db.updateProjectFile(existingFile.id, {
+          const updates = {
             content: content,
-            file_content: content,
-            file_size: content.length,
             updated_at: new Date().toISOString()
-          });
-          if (error) throw error;
+          };
+          await projectService.updateGeneratedFile(existingFile.id, updates);
           console.log('✅ Updated existing file:', fileName);
         } else {
           // Create new file
-          const { error } = await db.createProjectFile(fileData);
-          if (error) throw error;
+          const fileData = {
+            fileName: fileName,
+            fileType: fileType,
+            content: content,
+            metadata: {
+              icon: fileType === 'PRD Document' ? 'FileText' : 'Code',
+              generated_individually: true,
+              created_via: 'individual_generation'
+            }
+          };
+          await projectService.saveGeneratedFile(projectId, fileData);
           console.log('✅ Created new file:', fileName);
         }
         
@@ -538,7 +514,6 @@ function AppContent() {
       }
     } catch (error) {
       console.error('Error saving file:', error);
-      // Show error to user but don't crash
       alert('Failed to save file. Please try again.');
     }
   };
@@ -608,20 +583,12 @@ function AppContent() {
           <ProjectDetail 
             project={currentProject}
             onClose={() => setCurrentView('dashboard')}
+            onNavigateToFeature={handleNavigateToFeature}
             onGenerateFile={handleGenerateFile}
             onDesignUpdate={(updatedDesign) => handleDesignUpdate(currentProject.id, updatedDesign)}
           />
         ) : (
           <div>Project not found</div>
-        );
-
-      case 'cursor-rules':
-        return (
-          <CursorRulesGenerator 
-            onClose={() => currentProject ? setCurrentView('project-detail') : setCurrentView('home')}
-            project={currentProject}
-            onFileSaved={handleFileSaved}
-          />
         );
 
       case 'prd-generator':
@@ -641,23 +608,13 @@ function AppContent() {
           />
         );
 
-      case 'cursor-tutorial':
+      case 'files-guidance':
         return (
-          <CursorTutorial 
-            onClose={() => currentProject ? setCurrentView('project-detail') : setCurrentView('home')}
-            project={currentProject}
-          />
+          <FilesGuidance onClose={() => setCurrentView('dashboard')} />
         );
 
       default:
-        return (
-          <div className="min-h-screen bg-white">
-            <Header onNavigateToDashboard={() => setCurrentView('dashboard')} />
-            <main className="max-w-6xl mx-auto px-6 py-12 pt-24">
-              <Hero onNavigateToFeature={handleNavigateToFeature} />
-            </main>
-          </div>
-        );
+        return <div>Not Found</div>;
     }
   };
 

@@ -143,7 +143,9 @@ export const projectService = {
         id: file.id,
         name: file.file_name,
         type: file.file_type,
-        content: file.content,
+        content: file.file_content,
+        file_size: file.file_size,
+        metadata: file.metadata,
         createdAt: file.created_at,
         updatedAt: file.updated_at
       }))
@@ -154,15 +156,18 @@ export const projectService = {
   },
 
   // Save generated file
-  async saveGeneratedFile(projectId, fileName, fileType, content) {
+  async saveGeneratedFile(projectId, fileData) {
     try {
+      const { fileName, fileType, content, metadata } = fileData;
       const { data, error } = await supabase
         .from('project_files')
         .insert({
           project_id: projectId,
           file_name: fileName,
           file_type: fileType,
-          content: content
+          file_content: content,
+          file_size: new TextEncoder().encode(content).length,
+          metadata: metadata || {}
         })
         .select()
         .single()
@@ -172,7 +177,7 @@ export const projectService = {
         id: data.id,
         name: data.file_name,
         type: data.file_type,
-        content: data.content,
+        content: data.file_content,
         createdAt: data.created_at,
         updatedAt: data.updated_at
       }
@@ -183,11 +188,18 @@ export const projectService = {
   },
 
   // Update generated file
-  async updateGeneratedFile(fileId, content) {
+  async updateGeneratedFile(fileId, updates) {
     try {
+      // If content is being updated, also update file_size
+      if (updates.content) {
+        updates.file_content = updates.content;
+        updates.file_size = new TextEncoder().encode(updates.content).length;
+        delete updates.content; // remove old key
+      }
+
       const { data, error } = await supabase
         .from('project_files')
-        .update({ content })
+        .update(updates)
         .eq('id', fileId)
         .select()
         .single()
@@ -197,7 +209,7 @@ export const projectService = {
         id: data.id,
         name: data.file_name,
         type: data.file_type,
-        content: data.content,
+        content: data.file_content,
         createdAt: data.created_at,
         updatedAt: data.updated_at
       }

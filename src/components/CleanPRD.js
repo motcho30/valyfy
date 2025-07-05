@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { Edit3, Download, Save, X } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
 
 const CleanPRD = ({ project, prdContent, onDownload, onUpdate }) => {
   const [editingSection, setEditingSection] = useState(null);
@@ -622,6 +623,11 @@ const CleanPRD = ({ project, prdContent, onDownload, onUpdate }) => {
                   </div>
                 ) : (
                   <div>
+                    {/* Render markdown for correct formatting */}
+                    <div className="prose prose-slate max-w-none text-sm">
+                      <ReactMarkdown>{section.content}</ReactMarkdown>
+                    </div>
+                    {/* Optionally, also show visuals below the markdown */}
                     {renderSectionVisuals(section.type, sectionData)}
                   </div>
                 )}

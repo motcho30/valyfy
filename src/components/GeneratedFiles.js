@@ -10,15 +10,6 @@ const GeneratedFiles = ({ onClose }) => {
   const generatedFiles = [
     {
       id: 1,
-      name: 'cursor-rules-react-project.txt',
-      type: 'Cursor Rules',
-      icon: <Code className="w-4 h-4" />,
-      date: '2024-01-15',
-      size: '2.3 KB',
-      description: 'React project with TypeScript and Tailwind CSS rules'
-    },
-    {
-      id: 2,
       name: 'ecommerce-prd-v1.md',
       type: 'PRD Document',
       icon: <FileText className="w-4 h-4" />,
@@ -27,22 +18,13 @@ const GeneratedFiles = ({ onClose }) => {
       description: 'Product requirements for e-commerce platform'
     },
     {
-      id: 3,
+      id: 2,
       name: 'feature-analysis-report.md',
       type: 'Analysis Report',
       icon: <BookOpen className="w-4 h-4" />,
       date: '2024-01-13',
       size: '8.9 KB',
       description: 'Codebase feature extraction and analysis'
-    },
-    {
-      id: 4,
-      name: 'cursor-rules-api-backend.txt',
-      type: 'Cursor Rules',
-      icon: <Code className="w-4 h-4" />,
-      date: '2024-01-12',
-      size: '1.8 KB',
-      description: 'Node.js API backend development rules'
     }
   ];
 
@@ -78,6 +60,13 @@ const GeneratedFiles = ({ onClose }) => {
               className="w-full px-3 py-2 text-gray-700 hover:bg-gray-50 rounded-lg flex items-center space-x-3 text-left transition-colors"
             >
               <span className="text-sm">← Back to Dashboard</span>
+            </button>
+
+            <button
+              onClick={() => window.dispatchEvent(new CustomEvent('navigate-files-guidance'))}
+              className="w-full px-3 py-2 text-blue-600 hover:bg-blue-50 rounded-lg flex items-center space-x-3 text-left transition-colors"
+            >
+              <span className="text-sm">📖 How to use these files</span>
             </button>
           </div>
         </nav>

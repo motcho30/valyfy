@@ -46,7 +46,7 @@ const ToolSection = ({
         {/* Right side - PRD section */}
         <div className="flex flex-col items-end max-w-md">
           <p className="text-lg text-black mb-6 text-right">
-            Generate a cursor rules file and a cursor personalized PRD for your app
+            Generate a personalized PRD for your app
           </p>
           <input
             type="text"

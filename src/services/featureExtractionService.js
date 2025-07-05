@@ -12,67 +12,72 @@ const FEW_SHOT_PROMPT = `You are an expert software engineer and product manager
 4.  Keep all feature names concise (2-4 words).
 5.  Format your response as a single, clean JSON object with two keys: "extracted_features" and "suggested_features". Do not include any other text or formatting.
 
-**Example 1: Travel App**
-Input: "I want to build an AI travel planner generator for users that want to travel"
+**Example 1: Brain Training Game**
+Input: "Make me a game for coworkers during lunch breaks that helps improve memory and concentration with daily brain games. Use colorblind-friendly design and accessibility options"
 Output:
 {
   "extracted_features": [
-    "AI Trip Planner",
-    "Itinerary Generation",
-    "Destination Suggestions"
+    "Daily Brain Games",
+    "Multiple Game Types",
+    "Simple Scoring System",
+    "Daily Challenge Rotation",
+    "Quick Game Sessions",
+    "Leaderboard",
+    "Colorblind-Friendly Design",
+    "Accessibility Options"
   ],
   "suggested_features": [
-    "Budget Tracking",
-    "Weather Forecasts",
-    "Flight & Hotel Booking",
-    "Local Attraction Finder",
-    "Multi-day Itineraries",
-    "Travel Document Storage",
-    "Group Travel Planning",
-    "Currency Converter"
+    "User Profiles",
+    "Difficulty Levels",
+    "Achievement Badges",
+    "Progress Tracking Stats",
+    "Sound Controls",
+    "Team-based Competitions"
   ]
 }
 
-**Example 2: E-commerce Platform**
-Input: "I need a marketplace where people can sell handmade crafts with a rating system"
+**Example 2: Sponsorship Job Board**
+Input: "I want to build a webscraper website job board that is made to show all jobs that are able to offer future sponsorship, this is targeted for international students in the uk to apply for jobs with sponsorships"
 Output:
 {
   "extracted_features": [
-    "Handmade Craft Marketplace",
-    "Seller Profiles",
-    "Product Ratings & Reviews",
-    "Product Listing Creation"
+    "Sponsored Job Listings",
+    "Job Search and Filtering",
+    "Sponsorship Type Filter",
+    "Company Sponsorship History",
+    "Redirect to Application",
+    "Job Categorization",
+    "Responsive Design"
   ],
   "suggested_features": [
-    "Secure Payment Gateway",
-    "Shopping Cart",
-    "Advanced Search & Filters",
-    "Seller Verification",
-    "Favorite Items/Sellers",
-    "Custom Order Requests",
-    "Inventory Management",
-    "Direct Buyer-Seller Messaging"
+    "Email Job Alerts",
+    "Saved Job Searches",
+    "User Accounts",
+    "Application Tracker",
+    "CV/Resume Upload",
+    "Sponsorship Guide/FAQ"
   ]
 }
 
-**Example 3: Fitness Application**
-Input: "Create a workout tracker that uses AI to suggest exercises based on user goals"
+**Example 3: AI Chatbot**
+Input: "Build an AI webapp chatbot that answers customer service questions"
 Output:
 {
   "extracted_features": [
-    "Workout Logging",
-    "AI Exercise Recommendations",
-    "User Fitness Goals"
+    "Interactive Chat Interface",
+    "AI-powered Responses",
+    "Real-time Conversation Flow",
+    "Message History",
+    "API Error Handling",
+    "Responsive Design"
   ],
   "suggested_features": [
-    "Progress Visualization",
-    "Exercise Video Library",
-    "Rest Day Scheduling",
-    "Calorie Tracking",
-    "Personal Record Tracking",
-    "Wearable Device Sync",
-    "Social Sharing",
-    "Nutrition Suggestions"
+    "Conversation Handover to Agent",
+    "User Feedback on Responses",
+    "Multi-language Support",
+    "Pre-defined Quick Replies",
+    "Chat Transcript Export",
+    "Usage Analytics Dashboard"
   ]
 }
 

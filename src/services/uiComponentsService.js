@@ -1288,7 +1288,7 @@ export const generateComponentExamples = (designId) => {
   return examples;
 };
 
-// Helper function to generate complete component content for cursor rules
+// Helper function to generate complete component content
 export const generateCompleteComponentContent = (designId) => {
   const designData = UI_COMPONENTS_DATA[designId];
   if (!designData) return '';

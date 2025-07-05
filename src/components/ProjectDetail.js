@@ -1,22 +1,25 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import PRDSection from './PRDSection';
-import CursorRulesSection from './CursorRulesSection';
 import DesignSpec from './DesignSpec';
+import FilesGuidance from './FilesGuidance';
+import DesignReview from './DesignReview';
+import { generatePromptForFeature } from '../services/promptGeneratorService';
+import { useProjectFiles } from '../hooks/useProjectFiles';
+import { Check, Copy, Zap, History, GripVertical, Palette } from 'lucide-react';
 
-const ProjectDetail = ({ project, onClose, onGenerateFile, onDesignUpdate }) => {
-  const [activeTab, setActiveTab] = useState('overview');
+const ProjectDetail = ({ project, onClose, onGenerateFile, onDesignUpdate, onNavigateToFeature }) => {
+  const [activeTab, setActiveTab] = useState('get-started');
   const [fileContents, setFileContents] = useState({});
   const [loadingFiles, setLoadingFiles] = useState(false);
+  const [activeModal, setActiveModal] = useState(null);
 
-  // Load file content from Supabase when needed
   const loadFileContent = async (fileId, fileType) => {
     if (fileContents[fileId]) return fileContents[fileId];
     
     try {
       setLoadingFiles(true);
       
-      // Check if this is a Supabase project
       const isSupabaseProject = !project.id.toString().startsWith('local-');
       
       if (isSupabaseProject) {
@@ -24,9 +27,9 @@ const ProjectDetail = ({ project, onClose, onGenerateFile, onDesignUpdate }) => 
         const { data: files } = await db.getProjectFiles(project.id);
         const file = files?.find(f => f.file_type === fileType);
         
-        if (file?.content) {
-          setFileContents(prev => ({ ...prev, [fileId]: file.content }));
-          return file.content;
+        if (file?.file_content) {
+          setFileContents(prev => ({ ...prev, [fileId]: file.file_content }));
+          return file.file_content;
         }
       }
       
@@ -39,19 +42,15 @@ const ProjectDetail = ({ project, onClose, onGenerateFile, onDesignUpdate }) => 
     }
   };
 
-  // Check for actual generated files from the project
   const generatedFiles = {
     prd: project.generatedFiles?.find(f => f.type === 'PRD Document')?.content || 
          fileContents[project.generatedFiles?.find(f => f.type === 'PRD Document')?.id] || null,
-    cursorRules: project.generatedFiles?.find(f => f.type === 'Cursor Rules')?.content || 
-                 fileContents[project.generatedFiles?.find(f => f.type === 'Cursor Rules')?.id] || null,
     features: project.generatedFiles?.find(f => f.type === 'Analysis Report')?.content || 
               fileContents[project.generatedFiles?.find(f => f.type === 'Analysis Report')?.id] || null,
     tutorial: project.generatedFiles?.find(f => f.type === 'Tutorial')?.content || 
               fileContents[project.generatedFiles?.find(f => f.type === 'Tutorial')?.id] || null,
   };
   
-  // Load file contents on mount for Supabase projects
   useEffect(() => {
     const loadAllFileContents = async () => {
       if (!project.generatedFiles?.length) return;
@@ -66,8 +65,8 @@ const ProjectDetail = ({ project, onClose, onGenerateFile, onDesignUpdate }) => 
         if (files?.length) {
           const contents = {};
           files.forEach(file => {
-            if (file.content) {
-              contents[file.id] = file.content;
+            if (file.file_content) {
+              contents[file.id] = file.file_content;
             }
           });
           setFileContents(contents);
@@ -81,557 +80,503 @@ const ProjectDetail = ({ project, onClose, onGenerateFile, onDesignUpdate }) => 
   }, [project.id, project.generatedFiles]);
 
   const sidebarItems = [
-    { id: 'overview', name: 'Overview', icon: 'target' },
-    { id: 'design-spec', name: 'Design Spec', icon: 'palette' },
-    { id: 'cursor-rules', name: 'Cursor Rules', icon: 'settings' },
-    { id: 'prd', name: 'PRD Document', icon: 'file-text' },
-    { id: 'prompt-templates', name: 'Prompt Templates', icon: 'zap' },
+    { id: 'get-started', name: 'Get Started', icon: 'play-circle', action: () => setActiveTab('get-started') },
+    { id: 'overview', name: 'Overview', icon: 'target', action: () => setActiveTab('overview') },
+    { id: 'prompt-templates', name: 'Prompt Templates', icon: 'zap', action: () => setActiveTab('prompt-templates') },
+    { id: 'design-review', name: 'Design Review', icon: 'palette', action: () => setActiveTab('design-review') },
   ];
 
-  // Handle PRD updates
   const handlePRDUpdate = (updatedContent) => {
-    // For now, just log the update - in a full implementation, this would update the project data
     console.log('PRD updated:', updatedContent);
-    // In a full implementation, you would call a parent function to update the project state
-    // onUpdateProject({ ...project, generatedFiles: updatedFiles });
+  };
+
+  const openModal = (modalType) => {
+    setActiveModal(modalType);
+  };
+
+  const closeModal = () => {
+    setActiveModal(null);
   };
 
   const renderTabContent = () => {
     switch (activeTab) {
       case 'overview':
-        return <ProjectOverview project={project} generatedFiles={generatedFiles} />;
-      case 'design-spec':
-        return <DesignSpec project={project} onUpdate={onDesignUpdate} />;
-      case 'cursor-rules':
-        return (
-          <div className="p-8">
-            {loadingFiles ? (
-              <div className="flex items-center justify-center py-20">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-slate-900"></div>
-                <span className="ml-3 text-slate-600">Loading cursor rules content...</span>
-              </div>
-            ) : generatedFiles.cursorRules ? (
-              <CursorRulesSection 
-                content={generatedFiles.cursorRules}
-                onDownload={() => console.log('Cursor rules downloaded')}
-              />
-            ) : (
-              <EmptyState 
-                title="Cursor Rules File"
-                description="Generate a custom .cursorrules file for better AI context and coding consistency"
-                icon="⚙️"
-                onGenerate={async () => {
-                  // Try to load content first for Supabase projects
-                  const rulesFile = project.generatedFiles?.find(f => f.type === 'Cursor Rules');
-                  if (rulesFile && !rulesFile.content) {
-                    await loadFileContent(rulesFile.id, 'Cursor Rules');
-                  } else {
-                    onGenerateFile('cursor-rules', project);
-                  }
-                }}
-              />
-            )}
-          </div>
-        );
-      case 'prd':
-        return (
-          <div className="p-8">
-            {loadingFiles ? (
-              <div className="flex items-center justify-center py-20">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-slate-900"></div>
-                <span className="ml-3 text-slate-600">Loading PRD content...</span>
-              </div>
-            ) : generatedFiles.prd ? (
-              <PRDSection 
-                content={generatedFiles.prd}
-                project={project}
-                onDownload={() => console.log('PRD downloaded')}
-                onUpdate={handlePRDUpdate}
-              />
-            ) : (
-              <EmptyState 
-                title="Product Requirements Document"
-                description="Create comprehensive technical and business requirements for your project"
-                icon="📋"
-                onGenerate={async () => {
-                  // Try to load content first for Supabase projects
-                  const prdFile = project.generatedFiles?.find(f => f.type === 'PRD Document');
-                  if (prdFile && !prdFile.content) {
-                    await loadFileContent(prdFile.id, 'PRD Document');
-                  } else {
-                    onGenerateFile('prd-generator', project);
-                  }
-                }}
-              />
-            )}
-          </div>
-        );
+        return <ProjectOverview project={project} generatedFiles={generatedFiles} setActiveTab={setActiveTab} onOpenModal={openModal} onGenerateFile={onGenerateFile} loadFileContent={loadFileContent} />;
+      case 'get-started':
+        return <div className="flex-1 overflow-y-auto bg-white p-0 md:p-8"><FilesGuidance project={project} onNavigateToTab={setActiveTab} onOpenModal={openModal}/></div>;
       case 'prompt-templates':
-        return (
-          <ProjectPromptTemplates 
-            project={project}
-            availableFeatures={project.features || project.selectedFeatures || []}
-          />
-        );
+        return <ProjectPromptTemplates project={project} availableFeatures={project.features || project.selectedFeatures || []} />;
+      case 'design-review':
+        return <DesignReview project={project} />;
       default:
         return null;
     }
   };
 
+  const Modal = ({ isOpen, onClose, title, children }) => {
+    if (!isOpen) return null;
+
+    return (
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" onClick={onClose}>
+        <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} className="bg-white rounded-2xl max-w-6xl max-h-[90vh] overflow-hidden shadow-xl" onClick={(e) => e.stopPropagation()}>
+          <div className="flex items-center justify-between p-6 border-b border-gray-200">
+            <h2 className="text-2xl font-semibold text-gray-900">{title}</h2>
+            <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors"><svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg></button>
+          </div>
+          <div className="overflow-y-auto max-h-[calc(90vh-80px)]">{children}</div>
+        </motion.div>
+      </motion.div>
+    );
+  };
+
   return (
-    <div className="h-screen bg-slate-50 flex overflow-hidden">
-      {/* Sidebar */}
-      <motion.div
-        initial={{ x: -300, opacity: 0 }}
-        animate={{ x: 0, opacity: 1 }}
-        transition={{ duration: 0.6 }}
-        className="w-80 bg-white border-r border-slate-200 shadow-sm flex flex-col"
-      >
-        {/* Sidebar Header */}
+    <div className="h-screen bg-white flex overflow-hidden">
+      <motion.div initial={{ x: -300, opacity: 0 }} animate={{ x: 0, opacity: 1 }} transition={{ duration: 0.6 }} className="w-80 bg-white border-r border-slate-200 shadow-sm flex flex-col">
         <div className="p-6 border-b border-slate-200">
-          <motion.button
-            onClick={onClose}
-            whileHover={{ scale: 1.02 }}
-            className="flex items-center text-slate-600 hover:text-slate-800 transition-colors mb-4"
-          >
-            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-            </svg>
+          <motion.button onClick={onClose} whileHover={{ scale: 1.02 }} className="flex items-center text-slate-600 hover:text-slate-800 transition-colors mb-4">
+            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
             Back to Dashboard
           </motion.button>
           <h1 className="font-jersey text-2xl text-black mb-2">{project.name}</h1>
           <p className="text-sm text-slate-600 leading-relaxed">{project.description}</p>
           <div className="flex items-center space-x-2 mt-4">
-            <span className="px-2 py-1 bg-slate-100 text-slate-700 rounded text-xs">
-              {project.type}
-            </span>
-            {project.framework && (
-              <span className="px-2 py-1 bg-slate-100 text-slate-700 rounded text-xs">
-                {project.framework}
-              </span>
-            )}
+            <span className="px-2 py-1 bg-slate-100 text-slate-700 rounded text-xs">{project.type}</span>
+            {project.framework && (<span className="px-2 py-1 bg-slate-100 text-slate-700 rounded text-xs">{project.framework}</span>)}
           </div>
         </div>
-
-        {/* Minimalistic Navigation */}
         <nav className="flex-1 p-6 overflow-y-auto">
           <div className="space-y-1">
             {sidebarItems.map((item) => {
               const getIcon = (iconName) => {
                 const icons = {
-                  'target': (
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/>
-                    </svg>
-                  ),
-                  'palette': (
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10c1.19 0 2-.86 2-2 0-.53-.2-1-.5-1.4-.3-.4-.5-.9-.5-1.4 0-1.1.9-2 2-2h2.5c3.04 0 5.5-2.46 5.5-5.5C23 6.48 18.52 2 12 2z"/>
-                    </svg>
-                  ),
-                  'settings': (
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <circle cx="12" cy="12" r="3"/><path d="M12 1v6m0 6v6m11-7h-6m-6 0H1"/>
-                    </svg>
-                  ),
-                  'file-text': (
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10,9 9,9 8,9"/>
-                    </svg>
-                  ),
-                  'zap': (
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
-                    </svg>
-                  )
+                  'play-circle': (<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polygon points="10,8 16,12 10,16"/></svg>),
+                  'target': (<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>),
+                  'zap': (<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>),
+                  'palette': (<Palette className="w-5 h-5" />)
                 };
                 return icons[iconName] || icons['target'];
               };
               
               return (
-                <motion.button
-                  key={item.id}
-                  onClick={() => setActiveTab(item.id)}
-                  whileHover={{ scale: 1.01 }}
-                  whileTap={{ scale: 0.99 }}
-                  className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-left transition-all duration-200 ${
-                    activeTab === item.id
-                      ? 'bg-black text-white'
-                      : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
-                  }`}
-                >
-                  <div className="flex-shrink-0">
-                    {getIcon(item.icon)}
-                  </div>
+                <motion.button key={item.id} onClick={item.action} whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }} className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-left transition-all duration-200 ${activeTab === item.id ? 'bg-black text-white' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'}`}>
+                  <div className="flex-shrink-0">{getIcon(item.icon)}</div>
                   <span className="font-medium text-sm">{item.name}</span>
                 </motion.button>
               );
             })}
           </div>
         </nav>
-
-        {/* Project Stats */}
         <div className="p-4 border-t border-slate-200">
           <div className="bg-slate-50 rounded-xl p-4">
             <h4 className="text-sm font-semibold text-slate-800 mb-2">Project Stats</h4>
             <div className="space-y-2 text-xs">
-              <div className="flex justify-between">
-                <span className="text-slate-600">Files Generated</span>
-                <span className="font-medium">{project.filesCount || 0}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-slate-600">Created</span>
-                <span className="font-medium">{project.createdDate || new Date().toLocaleDateString()}</span>
-              </div>
+              <div className="flex justify-between"><span className="text-slate-600">Files Generated</span><span className="font-medium">{project.filesCount || 0}</span></div>
+              <div className="flex justify-between"><span className="text-slate-600">Created</span><span className="font-medium">{project.createdDate || new Date().toLocaleDateString()}</span></div>
             </div>
           </div>
         </div>
       </motion.div>
-
-      {/* Main Content */}
       <div className="flex-1 overflow-y-auto">
-        <motion.div
-          key={activeTab}
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4 }}
-          className="h-full"
-        >
+        <motion.div key={activeTab} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }} className="h-full">
           {renderTabContent()}
         </motion.div>
       </div>
+      <Modal isOpen={activeModal === 'design-spec'} onClose={closeModal} title="Design Specifications"><DesignSpec project={project} onUpdate={onDesignUpdate} /></Modal>
+      <Modal isOpen={activeModal === 'prd'} onClose={closeModal} title="Product Requirements Document">
+        <div className="p-8">
+          {loadingFiles ? <div className="flex items-center justify-center py-20"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-slate-900"></div><span className="ml-3 text-slate-600">Loading PRD content...</span></div> : generatedFiles.prd ? <PRDSection content={generatedFiles.prd} project={project} onDownload={() => console.log('PRD downloaded')} onUpdate={handlePRDUpdate} /> : <EmptyState title="Product Requirements Document" description="Create comprehensive technical and business requirements for your project" icon="📋" onGenerate={async () => { const prdFile = project.generatedFiles?.find(f => f.type === 'PRD Document'); if (prdFile && !prdFile.content) { await loadFileContent(prdFile.id, 'PRD Document'); } else { onGenerateFile('prd-generator', project); } closeModal(); }} />}
+        </div>
+      </Modal>
     </div>
   );
 };
 
-// Project Overview Component
-const ProjectOverview = ({ project, generatedFiles }) => {
-  const tools = [
-    {
-      name: 'Design Specifications',
-      description: 'Visual design system with colors, typography, spacing, and component styles from your selected theme',
-      status: 'Available',
-      hasContent: true,
-      category: 'DESIGN TOOL'
-    },
-    {
-      name: 'Product Requirements',
-      description: 'Generate comprehensive PRDs with visual breakdowns and editable sections for startup planning',
-      status: generatedFiles.prd ? 'Generated' : 'Not Generated',
-      hasContent: !!generatedFiles.prd,
-      category: 'PLANNING TOOL'
-    },
-    {
-      name: 'Cursor Rules',
-      description: 'Create custom .cursorrules files for better AI context and coding consistency across your project',
-      status: generatedFiles.cursorRules ? 'Generated' : 'Not Generated', 
-      hasContent: !!generatedFiles.cursorRules,
-      category: 'DEV TOOL'
-    },
-    {
-      name: 'Prompt Templates',
-      description: 'Build context-aware Cursor prompts using your project features with drag-and-drop interface',
-      status: 'Available',
-      hasContent: true,
-      category: 'AI TOOL'
-    },
-  ];
-  
+const ProjectOverview = ({ project, generatedFiles, setActiveTab, onOpenModal, onGenerateFile, loadFileContent }) => {
+  const getDesignData = () => {
+    if (project?.selectedDesign && typeof project.selectedDesign === 'object' && project.selectedDesign.colors && Object.keys(project.selectedDesign.colors).length > 0) return project.selectedDesign;
+    const designs = {'minimalistic': {id: 'minimalistic', name: 'Minimalistic/Modern', description: 'Clean, uncluttered, content-focused', colors: {background: { hex: '#F9FAFB', name: 'Background' }, foreground: { hex: '#FFFFFF', name: 'Foreground' }, accent: { hex: '#10B981', name: 'Primary Accent' }, primaryText: { hex: '#111827', name: 'Primary Text' }}, typography: { primary: 'Inter', body: { size: '16px', weight: '400', lineHeight: '1.7' } }, components: { borderRadius: '8px', shadows: 'subtle layered shadows' }}, 'tech-dark': {id: 'tech-dark', name: 'Tech Dark Mode', description: 'Premium dark-mode tech aesthetic', colors: {background: { hex: '#000000', name: 'Background' }, surface: { hex: '#111116', name: 'Surface' }, accent: { hex: '#5865F2', name: 'Electric Blue' }, primaryText: { hex: '#FFFFFF', name: 'Text Primary' }}, typography: { primary: 'Space Grotesk', body: { size: '16px', weight: '400', lineHeight: '1.7' } }, components: { borderRadius: '12px', shadows: 'glow effects and blur' }}};
+    const designId = project?.designId || 'minimalistic';
+    return designs[designId] || designs['minimalistic'];
+  };
+  const designData = getDesignData();
+
+  const parsePRDForOverview = (prdContent) => {
+    if (!prdContent) return null;
+    const sections = {};
+    const lines = prdContent.split('\n');
+    let currentSectionKey = '';
+    
+    const sectionMapping = {
+      'problem statement': 'problemStatement',
+      'solution': 'solution',
+      'target audience': 'targetAudience',
+      'user flow': 'userFlow',
+    };
+
+    lines.forEach(line => {
+      const trimmed = line.trim();
+      if (trimmed.startsWith('## ')) {
+        const headerText = trimmed.replace(/^##\s*/, '').toLowerCase();
+        const foundKey = Object.keys(sectionMapping).find(key => headerText.includes(key));
+        if (foundKey) {
+          currentSectionKey = sectionMapping[foundKey];
+          sections[currentSectionKey] = '';
+        } else {
+          currentSectionKey = '';
+        }
+      } else if (currentSectionKey && trimmed) {
+        sections[currentSectionKey] += line + '\n';
+        }
+    });
+
+    Object.keys(sections).forEach(key => {
+      const content = sections[key];
+      if (content) {
+        const firstParagraph = content.split('\n\n')[0];
+        sections[key] = firstParagraph.replace(/^[*-]\s*/gm, '').trim();
+    }
+    });
+
+    return sections;
+  };
+
+  const parsedPRD = parsePRDForOverview(generatedFiles.prd);
+
+  const storedPrompts = React.useMemo(() => {
+    if (!project?.id) return [];
+    try {
+      return JSON.parse(localStorage.getItem(`prompts_${project.id}`) || '[]');
+    } catch { return []; }
+  }, [project?.id]);
+
   return (
-    <div className="p-8">
-      <div className="max-w-6xl mx-auto">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-12"
-        >
-          <h1 className="text-2xl font-semibold text-slate-900 mb-2">Development Tools</h1>
-          <p className="text-slate-600">
-            Generate and manage essential development resources for your project
-          </p>
-        </motion.div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {tools.map((tool, index) => (
-            <motion.div
-              key={tool.name}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.1 }}
-              className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow duration-200 group cursor-pointer"
-            >
-              {/* Tool Preview/Icon Area */}
-              <div className="bg-slate-50 rounded-lg p-4 mb-4 h-24 flex items-center justify-center border border-slate-100">
-                <div className="text-center">
-                  <div className="w-8 h-8 bg-slate-200 rounded-lg mx-auto mb-2 flex items-center justify-center">
-                    <div className="w-4 h-4 bg-slate-400 rounded"></div>
+    <div className="w-full bg-white p-6 md:p-10 space-y-8">
+      <div className="space-y-1">
+        <h1 className="text-3xl font-bold text-gray-900">Project Overview</h1>
+        <p className="text-gray-500">Quick snapshot of your design system, requirements and prompts.</p>
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div className="border border-gray-200 rounded-2xl p-6 shadow-sm hover:shadow-md transition-colors group">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="font-semibold text-gray-900">Design Specifications</h3>
+            <button onClick={() => onOpenModal('design-spec')} className="px-3 py-1 text-xs font-semibold bg-gray-100 border border-gray-200 text-gray-700 rounded-md hover:bg-gray-200 transition">View</button>
+          </div>
+          <div className="space-y-3 text-sm">
+            <div className="text-xs uppercase tracking-wide text-gray-500">Theme</div>
+            <div className="font-medium text-gray-800">{designData.name}</div>
+            <div className="text-xs uppercase tracking-wide text-gray-500">Description</div>
+            <p className="text-gray-600 leading-relaxed">{designData.description}</p>
+            <div className="text-xs uppercase tracking-wide text-gray-500">Colors</div>
+            <div className="flex space-x-3">
+              {Object.entries(designData.colors).slice(0,4).map(([key, color]) => (
+                <div key={key} className="flex flex-col items-center space-y-1">
+                  <span className="w-6 h-6 rounded-full border" style={{background: color.hex}} />
+                  <span className="text-[10px] text-gray-500">{color.name}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+        <div className="border border-gray-200 rounded-2xl p-6 shadow-sm hover:shadow-md transition-colors group">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="font-semibold text-gray-900">Product Requirements</h3>
+            <button onClick={() => onOpenModal('prd')} className="px-3 py-1 text-xs font-semibold bg-gray-100 border border-gray-200 text-gray-700 rounded-md hover:bg-gray-200 transition">View</button>
+          </div>
+          {generatedFiles.prd && parsedPRD ? (
+            <VisualPRDCard parsedPRD={parsedPRD} />
+          ) : (
+            <div className="space-y-3 text-sm">
+              <p className="text-gray-400 text-sm">PRD not generated yet.</p>
+              <button 
+                onClick={async () => { const prdFile = project.generatedFiles?.find(f => f.type === 'PRD Document'); if (prdFile && !prdFile.content) { await loadFileContent(prdFile.id, 'PRD Document'); } else { onGenerateFile('prd-generator', project); }}}
+                className="text-xs text-vibe-cyan hover:underline"
+              >
+                Generate PRD
+              </button>
+            </div>
+          )}
+        </div>
+        <div className="border border-gray-200 rounded-2xl p-6 shadow-sm hover:shadow-md transition-colors group">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="font-semibold text-gray-900">Prompt Templates</h3>
+            <button onClick={() => setActiveTab('prompt-templates')} className="px-3 py-1 text-xs font-semibold bg-gray-100 border border-gray-200 text-gray-700 rounded-md hover:bg-gray-200 transition">View</button>
+          </div>
+          <div className="space-y-3 text-sm">
+            {storedPrompts.length > 0 ? (
+              <div className="space-y-2 pt-2">
+                <div className="text-xs text-gray-500 mb-2">Recent Saved Prompts</div>
+                {storedPrompts.slice(-3).map((p)=> (
+                  <div key={p.id} className="flex items-start space-x-2">
+                    <div className="w-2 h-2 bg-green-500 rounded-full flex-shrink-0 mt-1.5"></div>
+                    <div className="text-xs text-gray-700 line-clamp-2">
+                      <span className="font-medium mr-1">{p.feature}</span>
+                      <span className="text-gray-500">• {new Date(p.createdAt).toLocaleDateString()}</span>
+                    </div>
                   </div>
-                  <span className="text-xs font-medium text-slate-500 uppercase tracking-wide">
-                    {tool.category}
-                  </span>
-                </div>
+                ))}
               </div>
-
-              {/* Tool Info */}
-              <div className="space-y-3">
-                <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <h3 className="text-base font-semibold text-slate-900">{tool.name}</h3>
-                    <span className={`px-2 py-1 rounded text-xs font-medium ${
-                      tool.hasContent 
-                        ? 'bg-green-100 text-green-700' 
-                        : 'bg-slate-100 text-slate-600'
-                    }`}>
-                      {tool.status}
-                    </span>
-                  </div>
-                  <p className="text-slate-600 text-xs leading-relaxed">
-                    {tool.description}
-                  </p>
-                </div>
-
-                {/* Action Button */}
-                <div className="flex items-center text-slate-400 group-hover:text-slate-600 transition-colors">
-                  <span className="text-xs font-medium mr-1">
-                    {tool.hasContent ? 'View & Edit' : 'Generate'}
-                  </span>
-                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                  </svg>
-                </div>
+            ) : (
+              <div className="flex flex-wrap gap-2">
+                {(project.features || project.selectedFeatures || []).slice(0,3).map((f,idx) => (
+                  <span key={idx} className="px-2 py-0.5 bg-gray-100 text-gray-700 rounded-full text-xs">{f}</span>
+                ))}
+                {(project.features || project.selectedFeatures || []).length > 3 && (
+                  <span className="px-2 py-0.5 border border-gray-300 rounded-full text-xs text-gray-500">+{(project.features || project.selectedFeatures || []).length-3}</span>
+                )}
               </div>
-            </motion.div>
-          ))}
+            )}
+          </div>
         </div>
       </div>
     </div>
   );
 };
 
-// Empty State Component
+const VisualPRDCard = ({ parsedPRD }) => {
+  const sections = [
+    { key: 'problemStatement', title: 'Problem', icon: 'AlertTriangle' },
+    { key: 'solution', title: 'Solution', icon: 'CheckCircle' },
+    { key: 'targetAudience', title: 'Audience', icon: 'Users' },
+    { key: 'userFlow', title: 'User Flow', icon: 'GitMerge' },
+  ];
+
+  const getIcon = (iconName) => {
+    const icons = {
+      AlertTriangle: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>,
+      CheckCircle: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>,
+      Users: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.653-.124-1.28-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.653.124-1.28.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg>,
+      GitMerge: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 15l3-3m0 0l-3-3m3 3H9a3 3 0 00-3 3v1m0 0v1a3 3 0 003 3h3m-3-3h3m0 0a3 3 0 003-3V9m-6 9v-1m0 0v-1a3 3 0 013-3h3m-6 0h.01" /></svg>,
+    };
+    return <div className="text-slate-500">{icons[iconName]}</div>;
+  };
+  
+  return (
+    <div className="grid grid-cols-2 gap-4">
+      {sections.map(({ key, title, icon }) => (
+        parsedPRD[key] && (
+          <div key={key} className="bg-slate-50 p-3 rounded-lg border border-slate-200/60">
+            <div className="flex items-center space-x-2 mb-1">
+              {getIcon(icon)}
+              <h4 className="text-sm font-semibold text-slate-700">{title}</h4>
+            </div>
+            <p className="text-xs text-slate-500 leading-relaxed truncate">{parsedPRD[key].split('\n')[0]}</p>
+          </div>
+        )
+      ))}
+    </div>
+  );
+};
+
+const Card = ({ title, onOpen, onGenerate, content, children }) => (
+  <motion.div whileHover={{ scale: 1.01 }} className="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
+    <div className="flex items-center justify-between p-4 border-b border-slate-200/80">
+      <h3 className="font-semibold text-slate-800">{title}</h3>
+      <div className="flex items-center space-x-2">
+        <button onClick={onOpen} className="text-sm font-medium text-blue-600 hover:text-blue-800 transition-colors">View</button>
+      </div>
+    </div>
+    <div className="p-6">
+      {content !== null ? (
+        children
+      ) : (
+        <div className="text-center py-8">
+          <p className="text-slate-500 mb-4">This document hasn't been generated yet.</p>
+          <button onClick={onGenerate} className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-semibold">Generate Now</button>
+        </div>
+      )}
+    </div>
+  </motion.div>
+);
+
 const EmptyState = ({ title, description, icon, onGenerate }) => (
-  <div className="max-w-2xl mx-auto text-center py-20">
-    <div className="text-6xl mb-6">{icon}</div>
-    <h3 className="text-2xl font-semibold text-slate-800 mb-4">{title}</h3>
-    <p className="text-slate-600 mb-8">{description}</p>
-    <motion.button
-      onClick={onGenerate}
-      whileHover={{ scale: 1.05 }}
-      whileTap={{ scale: 0.95 }}
-      className="bg-slate-800 text-white px-8 py-3 rounded-xl font-semibold hover:bg-slate-700 transition-all duration-200"
-    >
-      Generate Now
-    </motion.button>
+  <div className="text-center py-20">
+    <div className="text-6xl mb-6">{icon}</div><h3 className="text-2xl font-semibold text-slate-800 mb-4">{title}</h3><p className="text-slate-600 mb-8">{description}</p><motion.button onClick={onGenerate} whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="bg-slate-800 text-white px-8 py-3 rounded-xl font-semibold hover:bg-slate-700 transition-all duration-200">Generate Now</motion.button>
   </div>
 );
 
-// Project-specific Prompt Templates Component
 const ProjectPromptTemplates = ({ project, availableFeatures }) => {
-  const [selectedTag, setSelectedTag] = useState(null);
+  const { saveGeneratedFile, getProjectFiles, loading: filesLoading } = useProjectFiles();
+  const [selectedFeature, setSelectedFeature] = useState(null);
   const [generatedPrompt, setGeneratedPrompt] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
-  const [draggedTag, setDraggedTag] = useState(null);
+  const [savedPrompts, setSavedPrompts] = useState([]);
+  const [showSuccessMessage, setShowSuccessMessage] = useState(false);
+  const [isApiAvailable, setIsApiAvailable] = useState(true);
+  const [showCopySuccess, setShowCopySuccess] = useState(false);
+  const [draggedFeature, setDraggedFeature] = useState(null);
   const [isDragOver, setIsDragOver] = useState(false);
+  const dropZoneRef = React.useRef(null);
+  const [showSavedPrompts, setShowSavedPrompts] = useState(false);
+  const savedPromptsRef = React.useRef(null);
 
-  const savePrompt = () => {
-    // Here you would implement the logic to save the prompt
-    // For now, we'll just show a console message
-    console.log('Saving prompt:', {
-      feature: selectedTag,
-      prompt: generatedPrompt
-    });
-  };
+  React.useEffect(() => {
+    function handleClickOutside(event) {
+      if (savedPromptsRef.current && !savedPromptsRef.current.contains(event.target)) setShowSavedPrompts(false);
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [savedPromptsRef]);
 
-  const handleDragStart = (e, tag) => {
-    setDraggedTag(tag);
+  useEffect(() => {
+    if (!project?.id || project.id.toString().startsWith('local-')) return;
+    const fetchPrompts = async () => {
+      try {
+        const files = await getProjectFiles(project.id);
+        const promptFiles = files.filter(f => f.type === 'Prompt Template').map(f => ({id: f.id, feature: f.metadata?.feature || f.name.replace('-prompt.md', '').replace(/-/g, ' '), content: f.content, createdAt: f.createdAt})).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+        setSavedPrompts(promptFiles);
+      } catch (error) {
+        console.error("Failed to fetch prompts from database", error);
+    setSavedPrompts([]);
+    }
+    };
+    fetchPrompts();
+    setIsApiAvailable(!!process.env.REACT_APP_OPENAI_API_KEY);
+  }, [project?.id]);
+
+  const handleDragStart = (e, feature) => {
+    setDraggedFeature(feature);
     e.dataTransfer.setData('text/plain', '');
   };
 
-  const handleDragOver = (e) => {
-    e.preventDefault();
-    setIsDragOver(true);
-  };
-
-  const handleDragLeave = () => {
-    setIsDragOver(false);
-  };
+  const handleDragOver = (e) => { e.preventDefault(); setIsDragOver(true); };
+  const handleDragLeave = (e) => { if (!dropZoneRef.current?.contains(e.relatedTarget)) setIsDragOver(false); };
 
   const handleDrop = (e) => {
     e.preventDefault();
     setIsDragOver(false);
+    if (draggedFeature) {
+      generatePrompt(draggedFeature);
+      setDraggedFeature(null);
+    }
+  };
     
-    if (draggedTag) {
-      setSelectedTag(draggedTag);
-      generatePrompt(draggedTag);
-      setDraggedTag(null);
+  const handleSavedPromptClick = (prompt) => {
+    setSelectedFeature(prompt.feature);
+    setGeneratedPrompt(prompt.content);
+  };
+
+  const savePrompt = async () => {
+    if (!selectedFeature || !generatedPrompt || !project?.id || project.id.toString().startsWith('local-')) return;
+    try {
+      const newFile = await saveGeneratedFile(project.id, { fileName: `${selectedFeature.replace(/\s+/g, '-')}-prompt.md`, fileType: 'Prompt Template', content: generatedPrompt, metadata: { feature: selectedFeature } });
+      const newPrompt = { id: newFile.id, feature: selectedFeature, content: generatedPrompt, createdAt: newFile.createdAt };
+      setSavedPrompts(prev => [newPrompt, ...prev]);
+      setShowSuccessMessage(true);
+      setTimeout(() => setShowSuccessMessage(false), 2000);
+    } catch (error) {
+      console.error("Failed to save prompt:", error);
+      alert("There was an error saving your prompt. Please try again.");
     }
   };
 
   const generatePrompt = async (feature) => {
+    setSelectedFeature(feature);
     setIsGenerating(true);
     setGeneratedPrompt('');
-    
     try {
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      const prompt = `# ${feature} Implementation Prompt for ${project.name}
-
-**Project Context**: ${project.description}
-
-**Feature**: ${feature}
-
-**Instructions**:
-1. Implement ${feature.toLowerCase()} functionality
-2. Follow ${project.type} best practices
-3. Ensure consistency with existing codebase
-4. Add proper error handling and validation
-5. Include responsive design for all screen sizes
-
-**Technical Requirements**:
-- Framework: ${project.framework || 'React'}
-- Styling: Tailwind CSS
-- State Management: React hooks
-- TypeScript for type safety
-- Performance optimization
-
-**${project.name} Specific Guidelines**:
-- Maintain the existing design system
-- Follow established naming conventions
-- Integrate with current data flow
-- Ensure accessibility compliance
-
-**Implementation Steps**:
-1. Create component structure
-2. Set up state management
-3. Implement core functionality
-4. Add styling and animations
-5. Write unit tests
-6. Update documentation
-
-**Code Quality Standards**:
-- Clean, readable code
-- Proper TypeScript types
-- Comprehensive error handling
-- Performance considerations
-- Mobile-first responsive design`;
-
+      const context = { name: project.name, type: project.type, description: project.description, framework: project.framework, features: availableFeatures };
+      const prompt = await generatePromptForFeature(feature, context);
       setGeneratedPrompt(prompt);
     } catch (error) {
-      setGeneratedPrompt('Error generating prompt. Please try again.');
+      console.error('Error generating prompt:', error);
+      setGeneratedPrompt(`Error: ${error.message}`);
     } finally {
       setIsGenerating(false);
     }
   };
 
-  return (
-    <div className="p-8">
-      <div className="max-w-4xl mx-auto">
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-8"
-        >
-          <h2 className="text-3xl font-bold text-slate-900 mb-4">Prompt Templates</h2>
-          <p className="text-lg text-slate-600">
-            Generate custom Cursor prompts using your project's features
-          </p>
-        </motion.div>
-        
-        {/* Project Features */}
-        <div className="mb-8">
-          <h3 className="text-lg font-semibold text-slate-800 mb-4">Project Features</h3>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-            {availableFeatures.map((feature, index) => (
-              <motion.div
-                key={feature}
-                draggable
-                onDragStart={(e) => handleDragStart(e, feature)}
-                whileHover={{ scale: 1.05 }}
-                className="px-4 py-3 rounded-lg cursor-grab transition-all bg-white border border-slate-200 text-slate-700 hover:bg-slate-100 shadow-sm"
-              >
-                <div className="text-sm font-medium truncate">{feature}</div>
-              </motion.div>
-            ))}
-          </div>
-        </div>
+  const handleFeatureClick = (feature) => generatePrompt(feature);
 
-        {/* Drop Zone */}
-        <div
-          onDragOver={handleDragOver}
-          onDragLeave={handleDragLeave}
-          onDrop={handleDrop}
-          className={`border-2 border-dashed rounded-2xl p-8 ${
-            isDragOver ? 'border-blue-400 bg-blue-50' : 'border-slate-300 bg-white'
-          }`}
-        >
-          {!selectedTag && !isGenerating ? (
-            <div className="text-center py-20">
-              <div className="text-6xl mb-6">🎯</div>
-              <h3 className="text-2xl font-semibold text-slate-800 mb-4">
-                Drop a feature here
-              </h3>
-              <p className="text-slate-600">
-                Drag any project feature to generate a tailored Cursor prompt
-              </p>
+  const copyToClipboard = async () => {
+    try {
+      await navigator.clipboard.writeText(generatedPrompt);
+      setShowCopySuccess(true);
+      setTimeout(() => setShowCopySuccess(false), 2000);
+    } catch (err) {
+      console.error('Failed to copy!', err);
+    }
+  };
+
+  if (!isApiAvailable) return <div>Your OpenAI API key is not configured. Please set it up to use this feature.</div>;
+
+  return (
+    <div className="p-4 sm:p-6 md:p-8 bg-white">
+      <div className="flex justify-between items-start mb-8">
+        <div><h2 className="text-2xl font-bold text-gray-900">Prompt Generator</h2><p className="text-gray-500 mt-1">Select or drag a feature to generate a detailed prompt.</p></div>
+        <div className="relative" ref={savedPromptsRef}>
+          <button onClick={() => setShowSavedPrompts(!showSavedPrompts)} className="flex items-center space-x-2 px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"><History className="w-4 h-4" /><span>History</span></button>
+          {showSavedPrompts && (
+            <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="absolute top-full right-0 mt-2 w-80 bg-white rounded-lg shadow-lg border z-10">
+              <div className="p-3 border-b"><h4 className="font-semibold">Saved Prompts</h4></div>
+              <div className="p-2 max-h-96 overflow-y-auto">{savedPrompts.length > 0 ? savedPrompts.map((prompt) => (<button key={prompt.id} onClick={() => { handleSavedPromptClick(prompt); setShowSavedPrompts(false); }} className="w-full text-left p-2 rounded-md hover:bg-gray-100"><div className="font-medium text-sm">{prompt.feature}</div><p className="text-xs text-gray-500 truncate">{prompt.content}</p></button>)) : <div className="p-4 text-center text-sm text-gray-500">No saved prompts yet.</div>}</div>
+             </motion.div>
+           )}
+         </div>
             </div>
-          ) : isGenerating ? (
-            <div className="text-center py-20">
-              <motion.div
-                animate={{ rotate: 360 }}
-                transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-                className="w-12 h-12 border-2 border-blue-500 border-t-transparent rounded-full mx-auto mb-6"
-              />
-              <h3 className="text-2xl font-semibold text-slate-800 mb-4">
-                Generating prompt for {selectedTag}
-              </h3>
-            </div>
-          ) : (
-            <div className="space-y-6">
-              <div className="flex items-center justify-between">
-                <h3 className="text-xl font-semibold text-slate-800">
-                  Generated Prompt: {selectedTag}
-                </h3>
-                <div className="flex space-x-3">
-                  <motion.button
-                    onClick={savePrompt}
-                    whileHover={{ scale: 1.02 }}
-                    className="px-6 py-2 text-sm bg-black text-white rounded-lg hover:bg-slate-800 transition-all"
-                  >
-                    Save Prompt
-                  </motion.button>
-                  <motion.button
-                    onClick={() => navigator.clipboard.writeText(generatedPrompt)}
-                    whileHover={{ scale: 1.02 }}
-                    className="px-6 py-2 text-sm border-2 border-slate-200 text-slate-700 rounded-lg hover:border-slate-300 transition-all"
-                  >
-                    Copy
-                  </motion.button>
-                  <motion.button
-                    onClick={() => {
-                      const blob = new Blob([generatedPrompt], { type: 'text/plain' });
-                      const url = URL.createObjectURL(blob);
-                      const a = document.createElement('a');
-                      a.href = url;
-                      a.download = `${selectedTag.toLowerCase().replace(/\s+/g, '-')}-prompt.md`;
-                      a.click();
-                      URL.revokeObjectURL(url);
-                    }}
-                    whileHover={{ scale: 1.02 }}
-                    className="px-6 py-2 text-sm border-2 border-slate-200 text-slate-700 rounded-lg hover:border-slate-300 transition-all"
-                  >
-                    Download
-                  </motion.button>
+      <div className="mb-8">
+        <h3 className="text-lg font-semibold text-gray-800 mb-4">Available Features</h3>
+        <div className="flex flex-wrap gap-3">
+              {availableFeatures.map((feature, index) => (
+            <motion.div key={index} draggable onDragStart={(e) => handleDragStart(e, feature)} onClick={() => handleFeatureClick(feature)} whileHover={{ y: -2, boxShadow: "0 4px 12px rgba(0,0,0,0.1)" }} title="Click or drag to generate" className={`flex items-center space-x-2 px-4 py-2 rounded-full cursor-grab transition-all ${selectedFeature === feature ? 'bg-gray-800 text-white' : 'bg-white border border-gray-200'}`}>
+              <GripVertical className="w-4 h-4 text-gray-400" /><span className="font-medium">{feature}</span>
+            </motion.div>
+                  ))}
                 </div>
               </div>
-              
-              <div className="bg-slate-50 rounded-xl border border-slate-200 p-6 max-h-96 overflow-y-auto">
-                <pre className="whitespace-pre-wrap text-sm text-slate-700 font-mono leading-relaxed">
-                  {generatedPrompt}
-                </pre>
+      <div
+        ref={dropZoneRef}
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
+        className={`relative rounded-xl border-2 border-dashed p-6 transition-all duration-300 flex flex-col ${
+          isDragOver ? 'border-blue-500 bg-blue-50' : 'border-gray-300 bg-gray-50/50'
+        }`}
+        style={{ minHeight: '400px' }}
+      >
+        {isGenerating ? (
+          <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
+                 <motion.div
+                   animate={{ rotate: 360 }}
+              transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+              className="w-10 h-10 border-2 border-gray-400 border-t-gray-800 rounded-full mb-4"
+                 />
+            <p className="text-gray-600">Generating prompt for "{selectedFeature}"...</p>
+               </div>
+        ) : generatedPrompt ? (
+          <>
+            <div className="flex items-center justify-between mb-4 flex-shrink-0">
+              <h3 className="text-lg font-semibold text-gray-800">Generated Prompt</h3>
+              <div className="flex items-center space-x-2">
+                <button
+                  onClick={copyToClipboard}
+                  title="Copy to clipboard"
+                  className="p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                >
+                  {showCopySuccess ? <Check className="w-5 h-5 text-green-500" /> : <Copy className="w-5 h-5" />}
+                </button>
+                <button
+                         onClick={savePrompt}
+                  disabled={!generatedPrompt}
+                  className="px-4 py-2 text-sm bg-vibe-cyan text-black rounded-lg hover:shadow-md disabled:bg-gray-300 disabled:text-gray-500 disabled:hover:shadow-none transition-all font-semibold"
+                       >
+                  {showSuccessMessage ? 'Saved!' : 'Save Prompt'}
+                </button>
               </div>
             </div>
-          )}
-        </div>
+            <textarea
+              value={generatedPrompt}
+              onChange={(e) => setGeneratedPrompt(e.target.value)}
+              className="w-full flex-grow p-4 bg-white border border-gray-200 rounded-lg resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+              placeholder="Generated prompt will appear here..."
+            />
+          </>
+        ) : (
+          <div className="absolute inset-0 flex flex-col items-center justify-center text-center text-gray-500">
+            <Zap className="w-10 h-10 text-gray-400 mb-4" />
+            <h3 className="text-lg font-semibold text-gray-700">Select or drag a feature here</h3>
+            <p className="mt-1">Your tailored implementation prompt will appear here.</p>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -4,14 +4,10 @@ import {
   X, 
   Check, 
   Copy, 
-  ExternalLink, 
   FileText, 
-  Code, 
   FolderOpen, 
-  Settings, 
   ArrowRight,
-  CheckCircle,
-  AlertCircle
+  CheckCircle
 } from 'lucide-react';
 
 const ProjectGuidance = ({ project, onClose, isVisible }) => {
@@ -42,10 +38,6 @@ const ProjectGuidance = ({ project, onClose, isVisible }) => {
     }
   };
 
-  const getCursorRulesContent = () => {
-    return project?.generatedFiles?.find(file => file.type === 'Cursor Rules')?.content || '';
-  };
-
   const getPRDContent = () => {
     return project?.generatedFiles?.find(file => file.type === 'PRD Document')?.content || '';
   };
@@ -53,20 +45,13 @@ const ProjectGuidance = ({ project, onClose, isVisible }) => {
   const steps = [
     {
       id: 1,
-      title: "Setup Cursor Rules",
-      description: "Add the generated cursor rules to your Cursor settings",
-      icon: <Code className="w-6 h-6" />,
-      color: "bg-blue-500"
-    },
-    {
-      id: 2,
       title: "Save Project PRD",
       description: "Save the PRD document to your project's rules folder",
       icon: <FileText className="w-6 h-6" />,
       color: "bg-green-500"
     },
     {
-      id: 3,
+      id: 2,
       title: "Start Coding",
       description: "You're all set! Start building your project",
       icon: <CheckCircle className="w-6 h-6" />,
@@ -134,83 +119,8 @@ const ProjectGuidance = ({ project, onClose, isVisible }) => {
 
           {/* Content */}
           <div className="p-6 max-h-[60vh] overflow-y-auto">
-            {/* Step 1: Cursor Rules */}
+            {/* Step 1: PRD Setup */}
             {currentStep === 1 && (
-              <motion.div
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                className="space-y-6"
-              >
-                <div className="flex items-center space-x-3">
-                  <div className="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center text-white">
-                    <Code className="w-6 h-6" />
-                  </div>
-                  <div>
-                    <h3 className="text-xl font-semibold">Setup Cursor Rules</h3>
-                    <p className="text-gray-600">Configure your AI coding assistant</p>
-                  </div>
-                </div>
-
-                <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
-                  <div className="flex items-start space-x-3">
-                    <AlertCircle className="w-5 h-5 text-blue-600 mt-0.5" />
-                    <div>
-                      <h4 className="font-medium text-blue-900">How to add Cursor Rules:</h4>
-                      <ol className="mt-2 text-sm text-blue-800 space-y-1 list-decimal list-inside">
-                        <li>Open Cursor IDE</li>
-                        <li>Press <code className="bg-blue-100 px-1 rounded">Cmd/Ctrl + ,</code> to open settings</li>
-                        <li>Search for "Rules for AI" in the settings</li>
-                        <li>Copy the rules below and paste them in the text area</li>
-                        <li>Save your settings</li>
-                      </ol>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="border border-gray-200 rounded-xl">
-                  <div className="flex items-center justify-between p-4 border-b border-gray-200 bg-gray-50">
-                    <div className="flex items-center space-x-2">
-                      <Code className="w-4 h-4 text-gray-600" />
-                      <span className="font-medium text-gray-700">cursor-rules.txt</span>
-                    </div>
-                    <button
-                      onClick={() => handleCopyToClipboard(getCursorRulesContent(), 'cursor-rules')}
-                      className="flex items-center space-x-2 px-3 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                    >
-                      {copiedItems.has('cursor-rules') ? (
-                        <>
-                          <Check className="w-4 h-4" />
-                          <span>Copied!</span>
-                        </>
-                      ) : (
-                        <>
-                          <Copy className="w-4 h-4" />
-                          <span>Copy Rules</span>
-                        </>
-                      )}
-                    </button>
-                  </div>
-                  <div className="p-4 max-h-48 overflow-y-auto">
-                    <pre className="text-sm text-gray-800 whitespace-pre-wrap font-mono">
-                      {getCursorRulesContent() || "No cursor rules generated"}
-                    </pre>
-                  </div>
-                </div>
-
-                <div className="flex justify-end">
-                  <button
-                    onClick={() => handleStepComplete(1)}
-                    className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2"
-                  >
-                    <span>Rules Added</span>
-                    <ArrowRight className="w-4 h-4" />
-                  </button>
-                </div>
-              </motion.div>
-            )}
-
-            {/* Step 2: PRD Setup */}
-            {currentStep === 2 && (
               <motion.div
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
@@ -276,15 +186,9 @@ const ProjectGuidance = ({ project, onClose, isVisible }) => {
                   </div>
                 </div>
 
-                <div className="flex justify-between">
+                <div className="flex justify-end">
                   <button
-                    onClick={() => setCurrentStep(1)}
-                    className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
-                  >
-                    Back
-                  </button>
-                  <button
-                    onClick={() => handleStepComplete(2)}
+                    onClick={() => handleStepComplete(1)}
                     className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center space-x-2"
                   >
                     <span>PRD Saved</span>
@@ -294,8 +198,8 @@ const ProjectGuidance = ({ project, onClose, isVisible }) => {
               </motion.div>
             )}
 
-            {/* Step 3: Complete */}
-            {currentStep === 3 && (
+            {/* Step 2: Complete */}
+            {currentStep === 2 && (
               <motion.div
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
@@ -335,7 +239,7 @@ const ProjectGuidance = ({ project, onClose, isVisible }) => {
 
                 <div className="flex justify-between">
                   <button
-                    onClick={() => setCurrentStep(2)}
+                    onClick={() => setCurrentStep(1)}
                     className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
                   >
                     Back

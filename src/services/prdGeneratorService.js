@@ -6,65 +6,77 @@ You are an expert Product Manager with 10+ years of experience creating comprehe
 
 Generate a comprehensive PRD with the following sections:
 
-### 1. EXECUTIVE SUMMARY
-- Product vision and mission statement
-- Key value proposition
-- Success metrics overview
-- Timeline and resource requirements
+### 1. PROBLEM STATEMENT
+- Clear definition of the problem being solved
+- Market opportunity and pain points
+- Why this problem needs to be addressed now
+- Impact of not solving this problem
+- Business justification and opportunity size
 
-### 2. PRODUCT OVERVIEW
-- Problem statement and market opportunity
-- Target audience and user personas
-- Competitive landscape analysis
-- Product positioning and differentiation
-
-### 3. OBJECTIVES & SUCCESS METRICS
-- Primary business objectives
-- Key Performance Indicators (KPIs)
-- Success criteria and measurement methods
-- Timeline for achieving objectives
-
-### 4. USER STORIES & USE CASES
+### 2. TARGET USERS & USER PERSONAS
+- Primary and secondary user segments
 - Detailed user personas with demographics, motivations, and pain points
+- User behavior patterns and preferences
+- User research insights and validation
+
+#### FUNCTIONAL REQUIREMENTS - FEATURES LIST
+- Complete list of all features and functionalities
+- Feature prioritization using MoSCoW method (Must-have, Should-have, Could-have, Won't-have)
+- Feature descriptions and acceptance criteria
+- Dependencies between features
+- Integration requirements
+
+#### DATA MODEL / SCHEMA
+- Core data entities and their relationships
+- Database schema design recommendations
+- Data flow and storage requirements
+- API endpoints and data structures
+- Security and privacy considerations for data
+
+#### PAGES OF THE PLATFORM
+- Complete list of all pages/screens in the application
+- Page hierarchy and navigation structure
+- Key components and elements on each page
+- Responsive design considerations
+- Page-specific functionality and features
+
+### 3. USER STORIES & USE CASES
+- Detailed user stories for each feature (As a [user], I want [goal] so that [benefit])
 - Primary user journeys and workflows
 - Edge cases and error scenarios
 - Accessibility and inclusion considerations
+- User acceptance criteria for each story
 
-### 5. FUNCTIONAL REQUIREMENTS
-- Core features with detailed descriptions
-- Feature prioritization (Must-have, Should-have, Could-have)
-- User interface requirements
-- Integration requirements
+### 4. SUCCESS METRICS & KPIs
+- Primary business objectives and goals
+- Key Performance Indicators (KPIs) with specific targets
+- User engagement and retention metrics
+- Revenue and growth metrics
+- Success criteria and measurement methods
+- Timeline for achieving objectives
 
-### 6. TECHNICAL REQUIREMENTS
-- Platform and technology stack recommendations
-- Performance requirements (speed, scalability, reliability)
-- Security and privacy requirements
-- Data management and storage needs
+### 5. SCOPE & MVP DEFINITION
+- MVP (Minimum Viable Product) feature set
+- What's included in Phase 1 vs future phases
+- Clear scope boundaries (what's in/out of scope)
+- MVP success criteria and launch requirements
+- Post-MVP roadmap and future enhancements
 
-### 7. NON-FUNCTIONAL REQUIREMENTS
-- Usability and user experience standards
-- Accessibility compliance (WCAG guidelines)
-- Internationalization and localization needs
-- Browser and device compatibility
+### 6. USER FLOW & JOURNEY MAPPING
+- Complete user flow from first page to last for each major feature
+- Step-by-step user journey mapping
+- Decision points and user paths
+- Error handling and edge case flows
+- Onboarding and user activation flows
+- Feature-specific workflows and interactions
 
-### 8. DESIGN REQUIREMENTS
-- Visual design principles and brand guidelines
-- User interface design patterns
-- Responsive design requirements
-- Design system specifications
-
-### 9. IMPLEMENTATION ROADMAP
-- Development phases and milestones
-- Feature release timeline
-- Dependencies and risk mitigation
-- Resource allocation recommendations
-
-### 10. APPENDICES
-- Glossary of terms
-- References and research sources
-- Assumptions and constraints
-- Future enhancement opportunities
+### 7. COMPETITIVE LANDSCAPE
+- Direct and indirect competitors analysis
+- Competitive advantages and differentiation
+- Market positioning and unique value proposition
+- Competitor feature comparison
+- Lessons learned from competitor analysis
+- Market gaps and opportunities
 
 ## Writing Guidelines
 
@@ -90,11 +102,22 @@ Generate a comprehensive PRD with the following sections:
 
 Based on the provided inputs, you should:
 
-1. **Analyze the app concept** to understand the core problem and solution
-2. **Identify target users** based on the app description and features
-3. **Prioritize features** using the MoSCoW method (Must, Should, Could, Won't)
-4. **Recommend technology stack** based on app requirements and design preferences
-5. **Create realistic timelines** based on feature complexity and team size assumptions
+1. **Analyze the app concept** to clearly define the problem being solved
+2. **Identify target users** and create detailed personas based on the app description
+3. **Map all features** into a comprehensive list with MoSCoW prioritization
+4. **Design data model** that supports all the required features and user flows
+5. **List all platform pages** needed to deliver the functionality
+6. **Create detailed user flows** from entry point to completion for each feature
+7. **Analyze competitive landscape** and identify differentiation opportunities
+
+## Special Focus Areas
+
+Pay special attention to:
+
+- **Data Model/Schema**: Design a robust database structure that can handle all features
+- **Platform Pages**: List every single page/screen users will interact with
+- **User Flow Mapping**: Create step-by-step flows showing how users navigate through each feature
+- **MVP Scope**: Clearly define what goes into the first release vs future phases
 
 ## Output Format
 
@@ -103,13 +126,15 @@ Structure the PRD with clear sections, subsections, and consistent formatting. U
 ## Quality Standards
 
 The PRD should be:
-- **Actionable**: Clear enough for developers to start building
-- **Comprehensive**: Covers all aspects of product development
-- **Realistic**: Based on industry standards and best practices
-- **Stakeholder-friendly**: Accessible to both technical and business audiences
-- **Future-proof**: Considers scalability and evolution
+- **Problem-focused**: Clearly articulates the problem and why it matters
+- **User-centric**: Built around real user needs and personas
+- **Feature-complete**: Lists all features with clear prioritization
+- **Data-driven**: Includes comprehensive data model and schema design
+- **Flow-mapped**: Shows complete user journeys from start to finish
+- **Competitively-aware**: Understands the market landscape and positioning
+- **MVP-ready**: Clearly defines what goes into the minimum viable product
 
-Remember: A great PRD serves as the foundation for successful product development. It should answer the "what," "why," and "how" while leaving room for creative implementation solutions.`;
+Remember: A great PRD serves as the blueprint for product development. It should provide a clear problem statement, detailed user flows, comprehensive feature mapping, and a solid data foundation for successful implementation.`;
 
 export const generatePRD = async (appIdea, selectedFeatures, selectedDesign) => {
   try {
@@ -128,7 +153,7 @@ export const generatePRD = async (appIdea, selectedFeatures, selectedDesign) => 
         'Authorization': `Bearer ${process.env.REACT_APP_OPENAI_API_KEY}`
       },
       body: JSON.stringify({
-        model: 'gpt-4o-mini',
+        model: 'gpt-4.1',
         messages: [
           {
             role: 'system',
@@ -161,7 +186,7 @@ IMPORTANT: The PRD should specifically reference the HextaUI component library a
 Please create a detailed, professional PRD that covers all aspects of product development for this application. The PRD should be comprehensive enough to guide a development team from concept to launch and should specifically reference the UI component library and implementation details.`
           }
         ],
-        temperature: 0.7,
+        temperature: 0.5,
         max_tokens: 4000
       })
     });

@@ -18,7 +18,7 @@
 - **User Authentication**: Sign up/Sign in with email/password
 - **Profile Creation**: Automatic profile creation on signup
 - **Real Project Storage**: Projects persist across sessions
-- **File Storage**: Generated PRDs, Cursor Rules, etc. are saved to database
+- **File Storage**: Generated PRDs and other files are saved to database
 - **User Management**: Profile editing and logout functionality
 
 ## Next Steps for You in Supabase Dashboard:
@@ -57,7 +57,7 @@ REACT_APP_SUPABASE_ANON_KEY=eyJ...
 - Each user only sees their own projects
 
 ### 📄 File Generation & Storage
-- Generated files (PRD, Cursor Rules, etc.) save to database
+- Generated files (PRD, etc.) save to database
 - Files are associated with specific projects
 - Complete file history and management
 

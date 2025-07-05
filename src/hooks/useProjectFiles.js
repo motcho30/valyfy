@@ -7,7 +7,7 @@ export const useProjectFiles = () => {
   const [error, setError] = useState(null)
   const { isAuthenticated } = useAuth()
 
-  const saveGeneratedFile = async (projectId, fileName, fileType, content) => {
+  const saveGeneratedFile = async (projectId, fileData) => {
     if (!isAuthenticated) {
       throw new Error('User must be authenticated to save files')
     }
@@ -18,9 +18,7 @@ export const useProjectFiles = () => {
       
       const savedFile = await projectService.saveGeneratedFile(
         projectId,
-        fileName,
-        fileType,
-        content
+        fileData
       )
       
       return savedFile
@@ -32,7 +30,7 @@ export const useProjectFiles = () => {
     }
   }
 
-  const updateGeneratedFile = async (fileId, content) => {
+  const updateGeneratedFile = async (fileId, updates) => {
     if (!isAuthenticated) {
       throw new Error('User must be authenticated to update files')
     }
@@ -41,7 +39,7 @@ export const useProjectFiles = () => {
       setLoading(true)
       setError(null)
       
-      const updatedFile = await projectService.updateGeneratedFile(fileId, content)
+      const updatedFile = await projectService.updateGeneratedFile(fileId, updates)
       return updatedFile
     } catch (err) {
       setError(err.message)

@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Copy, Download, Edit3, Save, X, Palette, Type, Layout, Eye, Package } from 'lucide-react';
+import { Copy, Download, Edit3, Save, X, Palette, Type, Layout, Eye, Package, FileText } from 'lucide-react';
 import { getUIComponentsForDesign, generateInstallationInstructions, generateComponentExamples } from '../services/uiComponentsService';
+import { downloadDesignSpec } from '../services/designSpecService';
 
 const DesignSpec = ({ project, onUpdate }) => {
   const [isEditing, setIsEditing] = useState(false);
@@ -91,16 +92,51 @@ const DesignSpec = ({ project, onUpdate }) => {
     return designs[designId] || designs['minimalistic'];
   };
 
-  const [designData, setDesignData] = useState(() => {
-    const selectedDesign = project?.selectedDesign || project?.designId || 'minimalistic';
-    return getDesignData(selectedDesign);
-  });
+  // Use the actual selectedDesign object from the project if available and valid
+  const getEffectiveDesignData = () => {
+    if (
+      project?.selectedDesign &&
+      typeof project.selectedDesign === 'object' &&
+      project.selectedDesign.colors &&
+      Object.keys(project.selectedDesign.colors).length > 0
+    ) {
+      return project.selectedDesign;
+    }
+    // fallback to static lookup if not present or incomplete
+    const designId = project?.designId || 'minimalistic';
+    return getDesignData(designId);
+  };
+
+  const [designData, setDesignData] = useState(() => getEffectiveDesignData());
+
+  useEffect(() => {
+    const updateDesignData = () => {
+      if (
+        project?.selectedDesign &&
+        typeof project.selectedDesign === 'object' &&
+        project.selectedDesign.colors &&
+        Object.keys(project.selectedDesign.colors).length > 0
+      ) {
+        return project.selectedDesign;
+      }
+      // fallback to static lookup if not present or incomplete
+      const designId = project?.designId || 'minimalistic';
+      return getDesignData(designId);
+    };
+    
+    setDesignData(updateDesignData());
+  }, [project]);
 
   useEffect(() => {
     if (editedDesign) {
       setDesignData(editedDesign);
     }
   }, [editedDesign]);
+
+  // Defensive: If designData or its colors are missing, show error
+  if (!designData || !designData.colors) {
+    return <div className="text-red-500 p-8">Design data is missing or incomplete. Please re-select a design theme.</div>;
+  }
 
   const handleColorChange = (colorKey, newHex) => {
     setEditedDesign(prev => ({
@@ -193,6 +229,16 @@ const DesignSpec = ({ project, onUpdate }) => {
                 >
                   <Download className="w-4 h-4" />
                   <span>Export Tokens</span>
+                </motion.button>
+
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => downloadDesignSpec(designData, project?.name || 'Project')}
+                  className="flex items-center space-x-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+                >
+                  <FileText className="w-4 h-4" />
+                  <span>Download Design Spec</span>
                 </motion.button>
                 
                 <motion.button

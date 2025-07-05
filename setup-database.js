@@ -51,7 +51,7 @@ CREATE TABLE IF NOT EXISTS public.project_files (
   id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
   project_id uuid REFERENCES public.projects(id) ON DELETE CASCADE NOT NULL,
   file_name text NOT NULL,
-  file_type text NOT NULL, -- 'cursor-rules', 'prd', 'feature-extraction', 'tutorial'
+  file_type text NOT NULL, -- 'prd', 'feature-extraction', 'tutorial'
   content text NOT NULL,
   created_at timestamp with time zone DEFAULT now(),
   updated_at timestamp with time zone DEFAULT now()

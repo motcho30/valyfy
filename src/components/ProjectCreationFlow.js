@@ -5,7 +5,6 @@ import DesignSelector from './DesignSelector';
 import ProjectGuidance from './ProjectGuidance';
 import { extractFeatures } from '../services/featureExtractionService';
 import { generatePRD } from '../services/prdGeneratorService';
-import { generateCursorRules } from '../services/cursorRulesService';
 
 const ProjectCreationFlow = ({ onClose, onProjectCreated }) => {
   // Project creation state
@@ -28,7 +27,6 @@ const ProjectCreationFlow = ({ onClose, onProjectCreated }) => {
   
   // Generation state
   const [generatedPRD, setGeneratedPRD] = useState('');
-  const [generatedRules, setGeneratedRules] = useState('');
   const [generationError, setGenerationError] = useState(null);
   
   // Created project
@@ -124,22 +122,14 @@ const ProjectCreationFlow = ({ onClose, onProjectCreated }) => {
       console.log('  - Design ID:', designToUse?.id);
       console.log('  - Design Name:', designToUse?.name);
       
-      // Generate both PRD and Cursor Rules simultaneously
-      console.log('📝 Calling generatePRD and generateCursorRules...');
-      const [prd, rules] = await Promise.all([
-        generatePRD(appIdea, selectedFeatures, designToUse),
-        generateCursorRules(appIdea, selectedFeatures, designToUse)
-      ]);
+      // Generate PRD
+      console.log('📝 Calling generatePRD...');
+      const prd = await generatePRD(appIdea, selectedFeatures, designToUse);
       
-      console.log('✅ Files generated successfully');
+      console.log('✅ PRD generated successfully');
       console.log('📊 PRD length:', prd?.length);
-      console.log('📊 Rules length:', rules?.length);
-      console.log('🔍 Rules includes HextaUI:', rules?.includes('HextaUI'));
-      console.log('🔍 Rules includes Card:', rules?.includes('Card'));
-      console.log('🔍 Rules includes ui-components:', rules?.includes('ui-components'));
       
       setGeneratedPRD(prd);
-      setGeneratedRules(rules);
       
       // Update project with file count, features, design, and generated content
       const updatedProject = {
@@ -148,7 +138,7 @@ const ProjectCreationFlow = ({ onClose, onProjectCreated }) => {
         selectedFeatures: selectedFeatures,
         selectedDesign: designToUse,
         designId: designToUse?.id,
-        filesCount: 2,
+        filesCount: 1,
         lastModified: new Date().toISOString().split('T')[0],
         generatedFiles: [
           {
@@ -159,15 +149,6 @@ const ProjectCreationFlow = ({ onClose, onProjectCreated }) => {
             date: new Date().toISOString().split('T')[0],
             size: `${Math.round(prd.length / 1024)}KB`,
             icon: 'FileText'
-          },
-          {
-            id: 'cursor-rules-' + Date.now(),
-            name: `${createdProject.name.replace(/\s+/g, '-')}-cursor-rules.txt`,
-            type: 'Cursor Rules', 
-            content: rules,
-            date: new Date().toISOString().split('T')[0],
-            size: `${Math.round(rules.length / 1024)}KB`,
-            icon: 'Code'
           }
         ]
       };
@@ -238,7 +219,7 @@ const ProjectCreationFlow = ({ onClose, onProjectCreated }) => {
         </div>
       </motion.header>
 
-      <main className="max-w-6xl mx-auto px-6 py-12 pt-32">
+      <main className="max-w-6xl mx-auto px-6 pt-32 pb-12 flex flex-col min-h-screen">
         {/* Step 1: Create Project */}
         {currentStep === 1 && (
           <motion.div
@@ -364,7 +345,7 @@ const ProjectCreationFlow = ({ onClose, onProjectCreated }) => {
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, ease: "easeOut" }}
-            className="w-full max-w-4xl text-center"
+            className="w-full max-w-4xl text-center flex-grow flex flex-col items-center justify-center"
           >
             <div className="mb-8">
               <h1 className="font-jersey text-4xl md:text-5xl text-black leading-tight mb-4">
@@ -478,7 +459,7 @@ const ProjectCreationFlow = ({ onClose, onProjectCreated }) => {
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
-            className="text-center py-20"
+            className="text-center flex-grow flex flex-col items-center justify-center"
           >
             <div className="flex justify-center mb-8">
               <motion.div
@@ -557,7 +538,7 @@ const ProjectCreationFlow = ({ onClose, onProjectCreated }) => {
               Project Created! 🎉
             </h1>
             <p className="text-black/60 text-lg mb-4">
-              Your {createdProject?.name} is ready with generated PRD and Cursor Rules
+              Your {createdProject?.name} is ready with generated PRD
             </p>
             
             <motion.div
@@ -594,27 +575,7 @@ const ProjectCreationFlow = ({ onClose, onProjectCreated }) => {
                 </motion.button>
               </motion.div>
 
-              {/* Cursor Rules Download */}
-              <motion.div
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.6 }}
-                className="bg-white/60 backdrop-blur-xl border border-black/10 rounded-xl p-6 flex items-center justify-between"
-              >
-                <div className="text-left">
-                  <h3 className="font-semibold text-black">Cursor Rules Configuration</h3>
-                  <p className="text-sm text-black/60">AI coding assistant configuration</p>
-                </div>
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={() => handleDownload(generatedRules, `${createdProject?.name.replace(/\s+/g, '-')}-cursor-rules.txt`)}
-                  className="px-4 py-2 bg-vibe-cyan text-black rounded-lg font-medium hover:shadow-lg transition-all flex items-center space-x-2"
-                >
-                  <Download className="w-4 h-4" />
-                  <span>Download</span>
-                </motion.button>
-              </motion.div>
+
             </div>
 
             <div className="flex justify-center space-x-4">
