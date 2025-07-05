@@ -195,21 +195,7 @@ const Dashboard = ({ projects = [], loading = false, onNavigateToFeature, onNavi
                 <span className="absolute -top-2 -right-2 text-xs">🚀</span>
               </motion.button>
               
-              {onSetupDatabase && (
-                <div className="text-center">
-                  <p className="text-black/40 text-sm mb-3">
-                    Want to enable real database storage?
-                  </p>
-                  <motion.button
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    onClick={onSetupDatabase}
-                    className="bg-slate-100 text-black px-6 py-2 rounded-xl text-sm hover:bg-slate-200 transition-colors"
-                  >
-                    🔧 Set Up Database
-                  </motion.button>
-                </div>
-              )}
+
             </div>
           </motion.div>
         ) : (
