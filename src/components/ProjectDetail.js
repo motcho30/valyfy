@@ -4,15 +4,55 @@ import PRDSection from './PRDSection';
 import DesignSpec from './DesignSpec';
 import FilesGuidance from './FilesGuidance';
 import DesignReview from './DesignReview';
+import ProductManagerTab from './ProductManagerTab';
 import { generatePromptForFeature } from '../services/promptGeneratorService';
 import { useProjectFiles } from '../hooks/useProjectFiles';
-import { Check, Copy, Zap, History, GripVertical, Palette } from 'lucide-react';
+import { Check, Copy, Zap, History, GripVertical, Palette, ArrowRight, Plus, Bot } from 'lucide-react';
+import CursorTips from './CursorTips';
 
-const ProjectDetail = ({ project, onClose, onGenerateFile, onDesignUpdate, onNavigateToFeature }) => {
-  const [activeTab, setActiveTab] = useState('get-started');
+const AddFeatureModal = ({ isOpen, onClose, newFeatureName, setNewFeatureName, onAddFeature }) => {
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50 p-4" onClick={onClose}>
+      <motion.div 
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="bg-white rounded-2xl p-8 shadow-xl w-full max-w-md"
+        onClick={e => e.stopPropagation()}
+      >
+        <h3 className="text-xl font-semibold text-gray-900 mb-2">Add new feature</h3>
+        <p className="text-sm text-gray-600 mb-6">
+          Insert a feature, page, or development stage to generate a prompt for.
+        </p>
+        <input
+          type="text"
+          value={newFeatureName}
+          onChange={(e) => setNewFeatureName(e.target.value)}
+          onKeyPress={(e) => e.key === 'Enter' && onAddFeature()}
+          placeholder="e.g. User Authentication"
+          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none transition"
+          autoFocus
+        />
+        <div className="flex justify-end space-x-3 mt-6">
+          <button onClick={onClose} className="px-5 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition font-medium">
+            Cancel
+          </button>
+          <button onClick={onAddFeature} className="px-5 py-2 text-white bg-gray-800 rounded-lg hover:bg-black transition font-semibold">
+            Add & Generate
+          </button>
+        </div>
+      </motion.div>
+    </div>
+  );
+};
+
+const ProjectDetail = ({ project, onClose, onGenerateFile, onDesignUpdate, onNavigateToFeature, showGuidanceOnLoad = false }) => {
+  const [activeTab, setActiveTab] = useState('overview');
   const [fileContents, setFileContents] = useState({});
   const [loadingFiles, setLoadingFiles] = useState(false);
   const [activeModal, setActiveModal] = useState(null);
+  const [showOnboarding, setShowOnboarding] = useState(showGuidanceOnLoad);
 
   const loadFileContent = async (fileId, fileType) => {
     if (fileContents[fileId]) return fileContents[fileId];
@@ -80,10 +120,11 @@ const ProjectDetail = ({ project, onClose, onGenerateFile, onDesignUpdate, onNav
   }, [project.id, project.generatedFiles]);
 
   const sidebarItems = [
-    { id: 'get-started', name: 'Get Started', icon: 'play-circle', action: () => setActiveTab('get-started') },
     { id: 'overview', name: 'Overview', icon: 'target', action: () => setActiveTab('overview') },
     { id: 'prompt-templates', name: 'Prompt Templates', icon: 'zap', action: () => setActiveTab('prompt-templates') },
+    { id: 'product-manager', name: 'Product Manager', icon: 'bot', action: () => setActiveTab('product-manager') },
     { id: 'design-review', name: 'Design Review', icon: 'palette', action: () => setActiveTab('design-review') },
+    { id: 'cursor-tips', name: 'Cursor Tips', icon: 'lightbulb', action: () => setActiveTab('cursor-tips') },
   ];
 
   const handlePRDUpdate = (updatedContent) => {
@@ -101,13 +142,15 @@ const ProjectDetail = ({ project, onClose, onGenerateFile, onDesignUpdate, onNav
   const renderTabContent = () => {
     switch (activeTab) {
       case 'overview':
-        return <ProjectOverview project={project} generatedFiles={generatedFiles} setActiveTab={setActiveTab} onOpenModal={openModal} onGenerateFile={onGenerateFile} loadFileContent={loadFileContent} />;
-      case 'get-started':
-        return <div className="flex-1 overflow-y-auto bg-white p-0 md:p-8"><FilesGuidance project={project} onNavigateToTab={setActiveTab} onOpenModal={openModal}/></div>;
+        return <ProjectOverview project={project} generatedFiles={generatedFiles} setActiveTab={setActiveTab} onOpenModal={openModal} onGenerateFile={onGenerateFile} loadFileContent={loadFileContent} onShowOnboarding={() => setShowOnboarding(true)} />;
       case 'prompt-templates':
         return <ProjectPromptTemplates project={project} availableFeatures={project.features || project.selectedFeatures || []} />;
       case 'design-review':
         return <DesignReview project={project} />;
+      case 'product-manager':
+        return <ProductManagerTab project={project} />;
+      case 'cursor-tips':
+        return <CursorTips />;
       default:
         return null;
     }
@@ -152,7 +195,9 @@ const ProjectDetail = ({ project, onClose, onGenerateFile, onDesignUpdate, onNav
                   'play-circle': (<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polygon points="10,8 16,12 10,16"/></svg>),
                   'target': (<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>),
                   'zap': (<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>),
-                  'palette': (<Palette className="w-5 h-5" />)
+                  'palette': (<Palette className="w-5 h-5" />),
+                  'bot': (<Bot className="w-5 h-5" />),
+                  'lightbulb': (<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014.846 17H9.154a3.374 3.374 0 00-1.849-1.007L6.757 15.34z" /></svg>)
                 };
                 return icons[iconName] || icons['target'];
               };
@@ -166,15 +211,7 @@ const ProjectDetail = ({ project, onClose, onGenerateFile, onDesignUpdate, onNav
             })}
           </div>
         </nav>
-        <div className="p-4 border-t border-slate-200">
-          <div className="bg-slate-50 rounded-xl p-4">
-            <h4 className="text-sm font-semibold text-slate-800 mb-2">Project Stats</h4>
-            <div className="space-y-2 text-xs">
-              <div className="flex justify-between"><span className="text-slate-600">Files Generated</span><span className="font-medium">{project.filesCount || 0}</span></div>
-              <div className="flex justify-between"><span className="text-slate-600">Created</span><span className="font-medium">{project.createdDate || new Date().toLocaleDateString()}</span></div>
-            </div>
-          </div>
-        </div>
+
       </motion.div>
       <div className="flex-1 overflow-y-auto">
         <motion.div key={activeTab} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }} className="h-full">
@@ -187,14 +224,75 @@ const ProjectDetail = ({ project, onClose, onGenerateFile, onDesignUpdate, onNav
           {loadingFiles ? <div className="flex items-center justify-center py-20"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-slate-900"></div><span className="ml-3 text-slate-600">Loading PRD content...</span></div> : generatedFiles.prd ? <PRDSection content={generatedFiles.prd} project={project} onDownload={() => console.log('PRD downloaded')} onUpdate={handlePRDUpdate} /> : <EmptyState title="Product Requirements Document" description="Create comprehensive technical and business requirements for your project" icon="📋" onGenerate={async () => { const prdFile = project.generatedFiles?.find(f => f.type === 'PRD Document'); if (prdFile && !prdFile.content) { await loadFileContent(prdFile.id, 'PRD Document'); } else { onGenerateFile('prd-generator', project); } closeModal(); }} />}
         </div>
       </Modal>
+      
+      {/* Onboarding Overlay */}
+      {showOnboarding && (
+        <div className="fixed inset-0 z-50">
+          <FilesGuidance
+            project={project}
+            onClose={() => setShowOnboarding(false)}
+            onComplete={() => {
+              setShowOnboarding(false);
+              setActiveTab('overview');
+            }}
+          />
+        </div>
+      )}
     </div>
   );
 };
 
-const ProjectOverview = ({ project, generatedFiles, setActiveTab, onOpenModal, onGenerateFile, loadFileContent }) => {
+const ProjectOverview = ({ project, generatedFiles, setActiveTab, onOpenModal, onGenerateFile, loadFileContent, onShowOnboarding }) => {
   const getDesignData = () => {
-    if (project?.selectedDesign && typeof project.selectedDesign === 'object' && project.selectedDesign.colors && Object.keys(project.selectedDesign.colors).length > 0) return project.selectedDesign;
-    const designs = {'minimalistic': {id: 'minimalistic', name: 'Minimalistic/Modern', description: 'Clean, uncluttered, content-focused', colors: {background: { hex: '#F9FAFB', name: 'Background' }, foreground: { hex: '#FFFFFF', name: 'Foreground' }, accent: { hex: '#10B981', name: 'Primary Accent' }, primaryText: { hex: '#111827', name: 'Primary Text' }}, typography: { primary: 'Inter', body: { size: '16px', weight: '400', lineHeight: '1.7' } }, components: { borderRadius: '8px', shadows: 'subtle layered shadows' }}, 'tech-dark': {id: 'tech-dark', name: 'Tech Dark Mode', description: 'Premium dark-mode tech aesthetic', colors: {background: { hex: '#000000', name: 'Background' }, surface: { hex: '#111116', name: 'Surface' }, accent: { hex: '#5865F2', name: 'Electric Blue' }, primaryText: { hex: '#FFFFFF', name: 'Text Primary' }}, typography: { primary: 'Space Grotesk', body: { size: '16px', weight: '400', lineHeight: '1.7' } }, components: { borderRadius: '12px', shadows: 'glow effects and blur' }}};
+    // First check if we have a complete selectedDesign object
+    if (project?.selectedDesign && typeof project.selectedDesign === 'object') {
+      // For custom designs, use the selectedDesign directly
+      if (project.selectedDesign.isCustom) {
+        return {
+          ...project.selectedDesign,
+          // Ensure we have colors from the analysis
+          colors: project.selectedDesign.analysis?.colors || project.selectedDesign.colors || {},
+          // Use the analysis data for other properties
+          typography: project.selectedDesign.analysis?.typography || { primary: 'Inter', body: { size: '16px', weight: '400', lineHeight: '1.7' } },
+          components: project.selectedDesign.analysis?.components || { borderRadius: '8px', shadows: 'subtle layered shadows' }
+        };
+      }
+      // For standard designs with colors object
+      if (project.selectedDesign.colors && Object.keys(project.selectedDesign.colors).length > 0) {
+        return project.selectedDesign;
+      }
+    }
+    
+    // Fallback to predefined designs
+    const designs = {
+      'minimalistic': {
+        id: 'minimalistic', 
+        name: 'Minimalistic/Modern', 
+        description: 'Clean, uncluttered, content-focused', 
+        colors: {
+          background: { hex: '#F9FAFB', name: 'Background' }, 
+          foreground: { hex: '#FFFFFF', name: 'Foreground' }, 
+          accent: { hex: '#10B981', name: 'Primary Accent' }, 
+          primaryText: { hex: '#111827', name: 'Primary Text' }
+        }, 
+        typography: { primary: 'Inter', body: { size: '16px', weight: '400', lineHeight: '1.7' } }, 
+        components: { borderRadius: '8px', shadows: 'subtle layered shadows' }
+      }, 
+      'tech-dark': {
+        id: 'tech-dark', 
+        name: 'Tech Dark Mode', 
+        description: 'Premium dark-mode tech aesthetic', 
+        colors: {
+          background: { hex: '#000000', name: 'Background' }, 
+          surface: { hex: '#111116', name: 'Surface' }, 
+          accent: { hex: '#5865F2', name: 'Electric Blue' }, 
+          primaryText: { hex: '#FFFFFF', name: 'Text Primary' }
+        }, 
+        typography: { primary: 'Space Grotesk', body: { size: '16px', weight: '400', lineHeight: '1.7' } }, 
+        components: { borderRadius: '12px', shadows: 'glow effects and blur' }
+      }
+    };
+    
     const designId = project?.designId || 'minimalistic';
     return designs[designId] || designs['minimalistic'];
   };
@@ -254,6 +352,27 @@ const ProjectOverview = ({ project, generatedFiles, setActiveTab, onOpenModal, o
       <div className="space-y-1">
         <h1 className="text-3xl font-bold text-gray-900">Project Overview</h1>
         <p className="text-gray-500">Quick snapshot of your design system, requirements and prompts.</p>
+      </div>
+      
+      {/* Setup Guide Section */}
+      <div className="bg-gradient-to-r from-vibe-cyan/10 to-green-100 border border-vibe-cyan/20 rounded-2xl p-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">
+              🚀 Set up your Cursor foundation
+            </h3>
+            <p className="text-gray-600 text-sm">
+              Get step-by-step guidance on setting up your project files with Cursor AI
+            </p>
+          </div>
+          <button
+            onClick={onShowOnboarding}
+            className="px-6 py-3 bg-vibe-cyan text-black rounded-xl font-semibold hover:shadow-lg transition-all flex items-center space-x-2"
+          >
+            <span>Setup Guide</span>
+            <ArrowRight className="w-4 h-4" />
+          </button>
+        </div>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         <div className="border border-gray-200 rounded-2xl p-6 shadow-sm hover:shadow-md transition-colors group">
@@ -396,6 +515,9 @@ const EmptyState = ({ title, description, icon, onGenerate }) => (
 
 const ProjectPromptTemplates = ({ project, availableFeatures }) => {
   const { saveGeneratedFile, getProjectFiles, loading: filesLoading } = useProjectFiles();
+  const [features, setFeatures] = useState(availableFeatures);
+  const [isAddFeatureModalOpen, setAddFeatureModalOpen] = useState(false);
+  const [newFeatureName, setNewFeatureName] = useState('');
   const [selectedFeature, setSelectedFeature] = useState(null);
   const [generatedPrompt, setGeneratedPrompt] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
@@ -409,6 +531,10 @@ const ProjectPromptTemplates = ({ project, availableFeatures }) => {
   const [showSavedPrompts, setShowSavedPrompts] = useState(false);
   const savedPromptsRef = React.useRef(null);
 
+  useEffect(() => {
+    setFeatures(availableFeatures);
+  }, [availableFeatures]);
+  
   React.useEffect(() => {
     function handleClickOutside(event) {
       if (savedPromptsRef.current && !savedPromptsRef.current.contains(event.target)) setShowSavedPrompts(false);
@@ -474,7 +600,7 @@ const ProjectPromptTemplates = ({ project, availableFeatures }) => {
     setIsGenerating(true);
     setGeneratedPrompt('');
     try {
-      const context = { name: project.name, type: project.type, description: project.description, framework: project.framework, features: availableFeatures };
+      const context = { name: project.name, type: project.type, description: project.description, framework: project.framework, features: features };
       const prompt = await generatePromptForFeature(feature, context);
       setGeneratedPrompt(prompt);
     } catch (error) {
@@ -497,10 +623,29 @@ const ProjectPromptTemplates = ({ project, availableFeatures }) => {
     }
   };
 
+  const handleAddFeature = () => {
+    if (newFeatureName.trim()) {
+      const newFeature = newFeatureName.trim();
+      if (!features.includes(newFeature)) {
+        setFeatures(prev => [...prev, newFeature]);
+      }
+      generatePrompt(newFeature);
+      setNewFeatureName('');
+      setAddFeatureModalOpen(false);
+    }
+  };
+
   if (!isApiAvailable) return <div>Your OpenAI API key is not configured. Please set it up to use this feature.</div>;
 
   return (
     <div className="p-4 sm:p-6 md:p-8 bg-white">
+      <AddFeatureModal 
+        isOpen={isAddFeatureModalOpen}
+        onClose={() => setAddFeatureModalOpen(false)}
+        newFeatureName={newFeatureName}
+        setNewFeatureName={setNewFeatureName}
+        onAddFeature={handleAddFeature}
+      />
       <div className="flex justify-between items-start mb-8">
         <div><h2 className="text-2xl font-bold text-gray-900">Prompt Generator</h2><p className="text-gray-500 mt-1">Select or drag a feature to generate a detailed prompt.</p></div>
         <div className="relative" ref={savedPromptsRef}>
@@ -514,9 +659,15 @@ const ProjectPromptTemplates = ({ project, availableFeatures }) => {
          </div>
             </div>
       <div className="mb-8">
-        <h3 className="text-lg font-semibold text-gray-800 mb-4">Available Features</h3>
+        <div className="flex items-center justify-between mb-4">
+        <h3 className="text-lg font-semibold text-gray-800">Available Features</h3>
+          <button onClick={() => setAddFeatureModalOpen(true)} className="flex items-center space-x-1.5 px-3 py-1.5 text-sm bg-white border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">
+            <Plus className="w-4 h-4" />
+            <span>Add Feature</span>
+          </button>
+        </div>
         <div className="flex flex-wrap gap-3">
-              {availableFeatures.map((feature, index) => (
+              {features.map((feature, index) => (
             <motion.div key={index} draggable onDragStart={(e) => handleDragStart(e, feature)} onClick={() => handleFeatureClick(feature)} whileHover={{ y: -2, boxShadow: "0 4px 12px rgba(0,0,0,0.1)" }} title="Click or drag to generate" className={`flex items-center space-x-2 px-4 py-2 rounded-full cursor-grab transition-all ${selectedFeature === feature ? 'bg-gray-800 text-white' : 'bg-white border border-gray-200'}`}>
               <GripVertical className="w-4 h-4 text-gray-400" /><span className="font-medium">{feature}</span>
             </motion.div>

@@ -257,14 +257,7 @@ const Dashboard = ({ projects = [], loading = false, onNavigateToFeature, onNavi
                       {project.description}
                     </p>
                     
-                    {/* Project Stats */}
-                    <div className="flex items-center justify-between pt-2 text-xs text-black/40">
-                      <div className="flex items-center space-x-1">
-                        <Calendar className="w-3 h-3" />
-                        <span>Updated {project.lastModified}</span>
-                      </div>
-                      <span>Created {project.createdDate}</span>
-                    </div>
+        
                   </div>
                 </motion.div>
               ))}

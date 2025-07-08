@@ -7,7 +7,7 @@ module.exports = {
   theme: {
   	extend: {
   		colors: {
-  			'vibe-cyan': '#74EBF6',
+  			'vibe-cyan': '#22d3ee',
   			'lovable-purple': '#A855F7',
   			'color-1': 'hsl(var(--color-1))',
   			'color-2': 'hsl(var(--color-2))',
@@ -25,10 +25,7 @@ module.exports = {
   				'system-ui',
   				'sans-serif'
   			],
-  			jersey: [
-  				'Jersey 15',
-  				'serif'
-  			]
+  			jersey: ['"Jersey 25"', 'sans-serif']
   		},
   		animation: {
   			rainbow: 'rainbow var(--speed, 2s) infinite linear'
@@ -45,5 +42,7 @@ module.exports = {
   		}
   	}
   },
-  plugins: [],
+  plugins: [
+    require('@tailwindcss/typography'),
+  ],
 } 

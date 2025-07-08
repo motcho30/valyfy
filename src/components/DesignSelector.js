@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { getUIComponentsForDesign } from '../services/uiComponentsService';
+import { analyzeDesignImage, extractColorsFromAnalysis, generateDesignName } from '../services/designAnalysisService';
 
 const DesignSelector = ({ onDesignSelected, onBack }) => {
   const [selectedDesign, setSelectedDesign] = useState(null);
@@ -10,7 +11,11 @@ const DesignSelector = ({ onDesignSelected, onBack }) => {
   const [hue, setHue] = useState(180);
   const [saturation, setSaturation] = useState(50);
   const [lightness, setLightness] = useState(50);
+  const [uploadedDesigns, setUploadedDesigns] = useState([]);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [dragActive, setDragActive] = useState(false);
   const colorPickerRef = useRef(null);
+  const fileInputRef = useRef(null);
 
   // Extract colors from design prompts
   const extractColors = (designId) => {
@@ -34,6 +39,19 @@ const DesignSelector = ({ onDesignSelected, onBack }) => {
         { name: 'Border', color: '#222228', description: 'Subtle border' }
       ]
     };
+    
+    // Check if it's an uploaded design
+    const uploadedDesign = uploadedDesigns.find(d => d.id === designId);
+    if (uploadedDesign) {
+      const colorsObject = extractColorsFromAnalysis(uploadedDesign.analysis);
+      // Convert object format to array format for consistency
+      return Object.entries(colorsObject).map(([key, colorInfo]) => ({
+        name: colorInfo.name || key,
+        color: colorInfo.hex || colorInfo.color || '#000000',
+        description: colorInfo.description || 'Custom color from design analysis'
+      }));
+    }
+    
     return colorMaps[designId] || [];
   };
 
@@ -134,6 +152,77 @@ const DesignSelector = ({ onDesignSelected, onBack }) => {
     }
   }, [hue, saturation, lightness]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Handle file upload
+  const handleFileUpload = async (files) => {
+    if (!files || files.length === 0) return;
+    
+    const file = files[0];
+    
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      alert('Please upload an image file');
+      return;
+    }
+    
+    // Validate file size (max 10MB)
+    if (file.size > 10 * 1024 * 1024) {
+      alert('Please upload an image smaller than 10MB');
+      return;
+    }
+    
+    try {
+      setIsAnalyzing(true);
+      
+      // Analyze the image using GPT-4o
+      const analyzedDesign = await analyzeDesignImage(file);
+      
+      // Generate a better name based on analysis
+      const designName = generateDesignName(analyzedDesign.analysis);
+      analyzedDesign.name = designName;
+      
+      // Add to uploaded designs
+      setUploadedDesigns(prev => [...prev, analyzedDesign]);
+      
+      // Auto-select the new design
+      setSelectedDesign(analyzedDesign.id);
+      
+      // Set up initial colors from analysis
+      const colorsObject = extractColorsFromAnalysis(analyzedDesign.analysis);
+      const colorMap = {};
+      
+      // Convert object format to indexed format for the color picker
+      Object.entries(colorsObject).forEach(([key, colorInfo], index) => {
+        colorMap[index] = colorInfo.hex || colorInfo.color || '#000000';
+      });
+      
+      setCustomColors(colorMap);
+      
+    } catch (error) {
+      console.error('Error analyzing design:', error);
+      alert('Failed to analyze the design. Please try again.');
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
+
+  // Handle drag and drop
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    setDragActive(true);
+  };
+
+  const handleDragLeave = (e) => {
+    e.preventDefault();
+    setDragActive(false);
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    setDragActive(false);
+    const files = Array.from(e.dataTransfer.files);
+    handleFileUpload(files);
+  };
+
   // Generate updated design prompt with custom colors
   const getUpdatedDesignPrompt = (originalDesign) => {
     if (!selectedDesign || Object.keys(customColors).length === 0) {
@@ -156,7 +245,8 @@ const DesignSelector = ({ onDesignSelected, onBack }) => {
   };
 
   const handleContinue = () => {
-    const originalDesign = designTypes.find(d => d.id === selectedDesign);
+    const allDesigns = [...designTypes, ...uploadedDesigns];
+    const originalDesign = allDesigns.find(d => d.id === selectedDesign);
     const updatedDesign = {
       ...originalDesign,
       prompt: getUpdatedDesignPrompt(originalDesign),
@@ -406,6 +496,7 @@ css:
       {/* Design Options - More compact */}
       <div className="flex-1 min-h-0 overflow-y-auto">
         <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 mb-4">
+          {/* Render default design types */}
           {designTypes.map((design, index) => (
             <motion.div
               key={design.id}
@@ -506,56 +597,150 @@ css:
             </motion.div>
           ))}
 
-          {/* Coming Soon Cards */}
-          {[1].map((index) => (
+          {/* Render uploaded designs */}
+          {uploadedDesigns.map((design, index) => (
             <motion.div
-              key={`coming-soon-${index}`}
+              key={design.id}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: (designTypes.length + index) * 0.1, duration: 0.5 }}
               className="group"
             >
-              <div
-                className="w-full opacity-40"
+              <motion.button
+                whileHover={{ y: -8 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => handleDesignSelect(design)}
+                className={`w-full text-left transition-all duration-500 ${
+                  selectedDesign === design.id
+                    ? 'ring-2 ring-vibe-cyan'
+                    : 'hover:ring-1 hover:ring-black/20'
+                }`}
                 style={{
                   borderRadius: '24px',
                   overflow: 'hidden'
                 }}
               >
-                {/* Coming Soon Preview */}
-                <div className="relative aspect-[3/2] bg-white/30 backdrop-blur-xl border border-black/5 flex items-center justify-center"
+                {/* Custom Design Preview */}
+                <div className="relative aspect-[3/2] bg-white/60 backdrop-blur-xl border border-black/10 overflow-hidden"
                   style={{ 
                     backdropFilter: 'blur(20px)',
                     WebkitBackdropFilter: 'blur(20px)'
                   }}
                 >
+                  <img
+                    src={design.image}
+                    alt={design.name}
+                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                  />
+                  
+                  {/* Custom design indicator */}
+                  <div className="absolute top-3 left-3 bg-purple-500 text-white px-2 py-1 rounded-full text-xs font-medium">
+                    AI Generated
+                  </div>
+                  
+                  {/* Selection indicator */}
+                  {selectedDesign === design.id && (
+                    <motion.div
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      className="absolute top-3 right-3 w-5 h-5 bg-vibe-cyan rounded-full flex items-center justify-center"
+                    >
+                      <svg className="w-3 h-3 text-black" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                      </svg>
+                    </motion.div>
+                  )}
+                </div>
+
+                {/* Custom Design Info */}
+                <div className="p-4 bg-white/80 backdrop-blur-xl border-x border-b border-black/10"
+                  style={{ 
+                    backdropFilter: 'blur(20px)',
+                    WebkitBackdropFilter: 'blur(20px)'
+                  }}
+                >
+                  <h3 className="text-lg font-medium text-black mb-1">
+                    {design.name}
+                  </h3>
+                  <p className="text-black/60 font-light text-sm">
+                    {design.description}
+                  </p>
+                </div>
+              </motion.button>
+            </motion.div>
+          ))}
+
+          {/* Upload Design Inspiration */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: (designTypes.length + uploadedDesigns.length) * 0.1, duration: 0.5 }}
+            className="group"
+          >
+            <div
+              className="w-full cursor-pointer"
+              style={{
+                borderRadius: '24px',
+                overflow: 'hidden'
+              }}
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDrop}
+              onClick={() => fileInputRef.current?.click()}
+            >
+              {/* Upload Area */}
+              <div className={`relative aspect-[3/2] bg-white/40 backdrop-blur-xl border-2 border-dashed transition-all duration-300 flex items-center justify-center ${
+                dragActive ? 'border-vibe-cyan bg-vibe-cyan/10' : 'border-black/20 hover:border-black/40'
+              }`}
+                style={{ 
+                  backdropFilter: 'blur(20px)',
+                  WebkitBackdropFilter: 'blur(20px)'
+                }}
+              >
+                {isAnalyzing ? (
                   <div className="text-center">
-                    <div className="w-10 h-10 bg-black/10 rounded-full mx-auto mb-2 flex items-center justify-center">
-                      <svg className="w-5 h-5 text-black/40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div className="w-10 h-10 border-2 border-black/20 border-t-black/60 rounded-full mx-auto mb-2 animate-spin"></div>
+                    <p className="text-black/60 text-xs font-light">Analyzing design...</p>
+                  </div>
+                ) : (
+                  <div className="text-center">
+                    <div className="w-10 h-10 bg-black/10 rounded-full mx-auto mb-2 flex items-center justify-center group-hover:bg-black/20 transition-colors">
+                      <svg className="w-5 h-5 text-black/60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                       </svg>
                     </div>
-                    <p className="text-black/40 text-xs font-light">Coming Soon</p>
+                    <p className="text-black/60 text-xs font-light">
+                      {dragActive ? 'Drop your image here' : 'Upload design inspiration'}
+                    </p>
                   </div>
-                </div>
-
-                {/* Coming Soon Info */}
-                <div className="p-4 bg-white/40 backdrop-blur-xl border-x border-b border-black/5"
-                  style={{ 
-                    backdropFilter: 'blur(20px)',
-                    WebkitBackdropFilter: 'blur(20px)'
-                  }}
-                >
-                  <h3 className="text-lg font-medium text-black/40 mb-1">
-                    More Designs
-                  </h3>
-                  <p className="text-black/30 font-light text-sm">
-                    Additional styles coming soon
-                  </p>
-                </div>
+                )}
               </div>
-            </motion.div>
-          ))}
+
+              {/* Upload Info */}
+              <div className="p-4 bg-white/60 backdrop-blur-xl border-x border-b border-black/10"
+                style={{ 
+                  backdropFilter: 'blur(20px)',
+                  WebkitBackdropFilter: 'blur(20px)'
+                }}
+              >
+                <h3 className="text-lg font-medium text-black/80 mb-1">
+                  Upload Inspiration
+                </h3>
+                <p className="text-black/50 font-light text-sm">
+                  AI will analyze your design and create a specification
+                </p>
+              </div>
+            </div>
+
+            {/* Hidden file input */}
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              onChange={(e) => handleFileUpload(e.target.files)}
+              className="hidden"
+            />
+          </motion.div>
         </div>
       </div>
 

@@ -37,12 +37,7 @@ const ProjectCreationFlow = ({ onClose, onProjectCreated }) => {
 
   const projectTypes = [
     'Web App',
-    'Mobile App', 
-    'SaaS',
-    'Dashboard',
-    'E-commerce',
-    'API',
-    'Other'
+    'Mobile App'
   ];
 
   // Step 1: Create Project
@@ -157,7 +152,7 @@ const ProjectCreationFlow = ({ onClose, onProjectCreated }) => {
       console.log('Project with generated files:', updatedProject); // Debug log
       
       setCurrentStep(5); // Complete
-      onProjectCreated && onProjectCreated(updatedProject);
+      onProjectCreated && onProjectCreated(updatedProject, true); // Pass flag to show guidance
       
       // Auto-trigger guidance after a short delay
       setTimeout(() => {

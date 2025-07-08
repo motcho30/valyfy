@@ -1,8 +1,10 @@
-import React from 'react';
-import { motion, useScroll, useTransform } from 'framer-motion';
+import React, { useState } from 'react';
+import { motion, useScroll, useTransform, AnimatePresence } from 'framer-motion';
+import FeaturesMenu from './FeaturesMenu';
 
 const Header = ({ onNavigateToDashboard }) => {
   const { scrollY: motionScrollY } = useScroll();
+  const [showFeaturesMenu, setShowFeaturesMenu] = useState(false);
   
   // Transform scroll position to opacity (fade out when scrolling down)
   const opacity = useTransform(motionScrollY, [0, 200], [1, 0.3]);
@@ -20,9 +22,26 @@ const Header = ({ onNavigateToDashboard }) => {
         <div className="bg-gray-100/80 backdrop-blur-sm rounded-full px-6 py-3 flex items-center space-x-8 shadow-sm border border-white/20">
           <h1 className="text-xl font-bold text-black">Valyfy</h1>
           <nav className="flex space-x-6">
-            <a href="#features" className="text-gray-700 hover:text-black transition-colors duration-200">
-              Features
-            </a>
+            <div className="relative">
+              <button 
+                onClick={() => setShowFeaturesMenu(!showFeaturesMenu)}
+                className="text-gray-700 hover:text-black transition-colors duration-200"
+              >
+                Features
+              </button>
+              <AnimatePresence>
+                {showFeaturesMenu && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    <FeaturesMenu />
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
             <a href="#about" className="text-gray-700 hover:text-black transition-colors duration-200">
               About valyfy
             </a>

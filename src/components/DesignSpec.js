@@ -94,13 +94,42 @@ const DesignSpec = ({ project, onUpdate }) => {
 
   // Use the actual selectedDesign object from the project if available and valid
   const getEffectiveDesignData = () => {
-    if (
-      project?.selectedDesign &&
-      typeof project.selectedDesign === 'object' &&
-      project.selectedDesign.colors &&
-      Object.keys(project.selectedDesign.colors).length > 0
-    ) {
-      return project.selectedDesign;
+    if (project?.selectedDesign && typeof project.selectedDesign === 'object') {
+      // Handle custom designs
+      if (project.selectedDesign.isCustom) {
+        return {
+          ...project.selectedDesign,
+          // Ensure we have all required properties for custom designs
+          colors: project.selectedDesign.analysis?.colors || project.selectedDesign.colors || {},
+          typography: project.selectedDesign.analysis?.typography || { 
+            primary: 'Inter', 
+            secondary: 'Inter',
+            headings: {
+              h1: { size: '48px', weight: '700', spacing: '-0.025em' },
+              h2: { size: '36px', weight: '600', spacing: '-0.025em' },
+              h3: { size: '24px', weight: '500', spacing: '0' }
+            },
+            body: { size: '16px', weight: '400', lineHeight: '1.7' }
+          },
+          spacing: project.selectedDesign.analysis?.spacing || {
+            baseUnit: '8px',
+            sections: '64px',
+            cards: '24px',
+            buttons: '12px 24px'
+          },
+          components: project.selectedDesign.analysis?.components || {
+            borderRadius: '8px',
+            shadows: 'subtle layered shadows',
+            buttons: 'rounded-lg with generous padding',
+            cards: 'rounded-xl with 1px borders'
+          },
+          theme: 'custom'
+        };
+      }
+      // Handle standard designs with colors object
+      if (project.selectedDesign.colors && Object.keys(project.selectedDesign.colors).length > 0) {
+        return project.selectedDesign;
+      }
     }
     // fallback to static lookup if not present or incomplete
     const designId = project?.designId || 'minimalistic';
@@ -110,21 +139,7 @@ const DesignSpec = ({ project, onUpdate }) => {
   const [designData, setDesignData] = useState(() => getEffectiveDesignData());
 
   useEffect(() => {
-    const updateDesignData = () => {
-      if (
-        project?.selectedDesign &&
-        typeof project.selectedDesign === 'object' &&
-        project.selectedDesign.colors &&
-        Object.keys(project.selectedDesign.colors).length > 0
-      ) {
-        return project.selectedDesign;
-      }
-      // fallback to static lookup if not present or incomplete
-      const designId = project?.designId || 'minimalistic';
-      return getDesignData(designId);
-    };
-    
-    setDesignData(updateDesignData());
+    setDesignData(getEffectiveDesignData());
   }, [project]);
 
   useEffect(() => {

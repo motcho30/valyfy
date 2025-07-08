@@ -36,12 +36,7 @@ const CreateProject = ({ onClose, onProjectCreated }) => {
 
   const projectTypes = [
     'Web App',
-    'Mobile App', 
-    'SaaS',
-    'Dashboard',
-    'E-commerce',
-    'API',
-    'Other'
+    'Mobile App'
   ];
 
   return (

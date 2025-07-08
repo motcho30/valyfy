@@ -1,311 +1,318 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { CheckCircle, Play, FileText, Palette, Code, ArrowRight, ExternalLink } from 'lucide-react';
-import { downloadDesignSpec } from '../services/designSpecService';
+import { CheckCircle, FileText, ArrowRight, Copy, Check, Palette } from 'lucide-react';
+import { generateDesignSpecDocument } from '../services/designSpecService';
 
 /**
- * FilesGuidance – Modern "Get Started" guide component
+ * FilesGuidance – Full-screen onboarding experience for setting up Cursor project
  * Props:
- *  - project: includes generatedFiles array so we can offer downloads.
- *  - onClose (optional): callback when the user clicks the back link.
+ *  - project: includes generatedFiles array so we can offer copies.
+ *  - onClose: callback when the user wants to skip onboarding.
+ *  - onComplete: callback when the user completes the onboarding.
  */
 
-const DownloadButton = ({ file, label, icon: Icon, project, isDesignSpec }) => {
-  const handleDownload = async () => {
-    if (!file?.content) return;
-    
-    // Special handling for design spec downloads
-    if (isDesignSpec && project) {
-      // Get design data for download
-      const getDesignData = () => {
-        if (
-          project?.selectedDesign &&
-          typeof project.selectedDesign === 'object' &&
-          project.selectedDesign.colors &&
-          Object.keys(project.selectedDesign.colors).length > 0
-        ) {
-          return project.selectedDesign;
-        }
-        // fallback to static lookup if not present or incomplete
-        const designs = {
-          'minimalistic': {
-            id: 'minimalistic',
-            name: 'Minimalistic/Modern',
-            image: '/minimlistic.png',
-            description: 'Clean, uncluttered, content-focused',
-            theme: 'light',
-            colors: {
-              background: { hex: '#F9FAFB', name: 'Background', description: 'Light gray background' },
-              foreground: { hex: '#FFFFFF', name: 'Foreground', description: 'Pure white cards' },
-              primaryText: { hex: '#111827', name: 'Primary Text', description: 'Dark charcoal' },
-              secondaryText: { hex: '#6B7280', name: 'Secondary Text', description: 'Medium gray' },
-              borders: { hex: '#E5E7EB', name: 'Borders', description: 'Light gray borders' },
-              accent: { hex: '#10B981', name: 'Primary Accent', description: 'Vibrant green for CTAs' }
-            },
-            typography: {
-              primary: 'Inter',
-              secondary: 'Inter',
-              headings: {
-                h1: { size: '48px', weight: '700', spacing: '-0.025em' },
-                h2: { size: '36px', weight: '600', spacing: '-0.025em' },
-                h3: { size: '24px', weight: '500', spacing: '0' }
-              },
-              body: { size: '16px', weight: '400', lineHeight: '1.7' }
-            },
-            spacing: {
-              baseUnit: '8px',
-              sections: '64px',
-              cards: '24px',
-              buttons: '12px 24px'
-            },
-            components: {
-              borderRadius: '8px',
-              shadows: 'subtle layered shadows',
-              buttons: 'rounded-lg with generous padding',
-              cards: 'rounded-xl with 1px borders'
-            }
-          },
-          'tech-dark': {
-            id: 'tech-dark',
-            name: 'Tech Dark Mode',
-            image: '/darkmode.png',
-            description: 'Premium dark-mode tech aesthetic',
-            theme: 'dark',
-            colors: {
-              background: { hex: '#000000', name: 'Background', description: 'Pure black' },
-              surface: { hex: '#111116', name: 'Surface', description: 'Slightly lighter black' },
-              primaryText: { hex: '#FFFFFF', name: 'Text Primary', description: 'Pure white' },
-              secondaryText: { hex: '#888888', name: 'Text Secondary', description: 'Muted gray' },
-              accent: { hex: '#5865F2', name: 'Electric Blue', description: 'Primary accent' },
-              gradient1: { hex: '#8B5CF6', name: 'Purple', description: 'Gradient accent' },
-              gradient2: { hex: '#FF6B35', name: 'Orange', description: 'Orange glow' },
-              borders: { hex: '#222228', name: 'Borders', description: 'Subtle border' }
-            },
-            typography: {
-              primary: 'Space Grotesk',
-              secondary: 'Inter',
-              headings: {
-                h1: { size: '72px', weight: '600', spacing: '0.02em' },
-                h2: { size: '48px', weight: '600', spacing: '0.02em' },
-                h3: { size: '32px', weight: '500', spacing: '0' }
-              },
-              body: { size: '16px', weight: '400', lineHeight: '1.7' }
-            },
-            spacing: {
-              baseUnit: '8px',
-              sections: '128px',
-              cards: '32px',
-              buttons: '16px 32px'
-            },
-            components: {
-              borderRadius: '12px',
-              shadows: 'glow effects and blur',
-              buttons: 'gradient backgrounds with glow',
-              cards: 'floating with backdrop blur'
-            }
-          }
-        };
-        const designId = project?.designId || 'minimalistic';
-        return designs[designId] || designs['minimalistic'];
-      };
-
-      const designData = getDesignData();
-      await downloadDesignSpec(designData, project?.name || 'Project');
-      return;
-    }
-
-    // Regular file download
-    const blob = new Blob([file.content], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = file.name || `${label.replace(/\s+/g, '-').toLowerCase()}.md`;
-    a.click();
-    URL.revokeObjectURL(url);
-  };
-
-  return (
-    <motion.button
-      onClick={handleDownload}
-      disabled={!file?.content}
-      whileHover={{ scale: file?.content ? 1.02 : 1, y: file?.content ? -2 : 0 }}
-      whileTap={{ scale: file?.content ? 0.98 : 1 }}
-      className={`flex items-center space-x-2 px-6 py-3 rounded-xl font-semibold transition-all shadow-sm ${
-        file?.content 
-          ? 'bg-vibe-cyan text-black hover:shadow-lg' 
-          : 'bg-slate-200 text-slate-500 cursor-not-allowed'
-      }`}
-    >
-      <Icon className="w-5 h-5" />
-      <span>{file?.content ? `Download ${label}` : `Generate ${label} First`}</span>
-    </motion.button>
-  );
-};
-
-const StepCard = ({ step, isCompleted, isActive, project }) => {
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 30 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: step.id * 0.1, duration: 0.6 }}
-      className={`bg-white border rounded-2xl p-6 transition-all duration-300 w-full ${
-        isActive 
-          ? 'border-vibe-cyan shadow-lg' 
-          : 'border-slate-200/80 hover:border-slate-300'
-      }`}
-    >
-      <div className="flex items-center space-x-4 mb-4">
-        <div className={`flex items-center justify-center w-12 h-12 rounded-full font-bold text-lg flex-shrink-0 ${
-          isCompleted 
-            ? 'bg-slate-800 text-white' 
-            : isActive 
-              ? 'bg-vibe-cyan text-black' 
-              : 'bg-slate-100 text-slate-600 border border-slate-200'
-        }`}>
-          {isCompleted ? <CheckCircle className="w-6 h-6" /> : step.id}
-        </div>
-        <div>
-          <h3 className="text-xl font-bold text-slate-800">{step.title}</h3>
-          <p className="text-sm text-slate-500">{step.subtitle}</p>
-        </div>
-      </div>
-      
-      <div className="pl-16">
-        <p className="text-slate-600 leading-relaxed mb-6">{step.description}</p>
-        
-        <div className="flex flex-wrap gap-4 items-center">
-          {step.downloadButton && (
-            <DownloadButton 
-              file={step.file} 
-              label={step.downloadButton.label}
-              icon={step.downloadButton.icon}
-              project={project}
-              isDesignSpec={step.id === 1}
-            />
-          )}
-          
-          {step.actions?.map((action, index) => (
-            <motion.button
-              key={index}
-              whileHover={{ scale: 1.02, y: -1 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={action.onClick}
-              className="flex items-center space-x-2 text-sm font-medium text-slate-600 hover:text-black transition-colors"
-            >
-              <span>{action.label}</span>
-              <ArrowRight className="w-4 h-4" />
-            </motion.button>
-          ))}
-        </div>
-      </div>
-    </motion.div>
-  );
-};
-
-const FilesGuidance = ({ project, onClose, onNavigateToTab, onOpenModal }) => {
-  const [activeStep, setActiveStep] = useState(1);
+const FilesGuidance = ({ project, onClose, onComplete }) => {
+  const [currentStep, setCurrentStep] = useState(1);
+  const [completedSteps, setCompletedSteps] = useState(new Set());
+  const [copiedFiles, setCopiedFiles] = useState(new Set());
 
   const prdFile = project.generatedFiles?.find(f => f.type === 'PRD Document') || null;
-  const designSpecFile = {
-    name: `${project.name}-design-spec.html`,
-    content: 'dummy' // a truthy value to enable download
+
+  // Function to get combined PRD + Design Spec content
+  const getCombinedContent = () => {
+    if (!prdFile?.content) return '';
+    
+    // Get PRD content
+    let combinedContent = prdFile.content;
+    
+    // Generate tech stack section based on project type
+    const getTechStackSection = () => {
+      const projectType = project?.type;
+      
+      if (projectType === 'Web App') {
+        return `
+# Tech Stack Guidelines for Cursor AI
+
+## Development Stack
+This is a **Web App** project. When generating code or providing development guidance, use the following tech stack:
+
+### Frontend:
+- **JavaScript (ES6+)** - The primary language for the frontend.
+- **React** - A JavaScript library for building user interfaces.
+
+### Backend:
+- **Node.js** - A JavaScript runtime for the backend server.
+- **Express.js** - (Recommended) A web application framework for Node.js.
+
+### Development Guidelines:
+- **Frontend**:
+  - Use functional components with Hooks.
+  - Manage state with React Context or a library like Redux if complex.
+  - Use \`create-react-app\` for project setup.
+  - Structure components logically.
+- **Backend**:
+  - Create a RESTful API with Node.js and Express.
+  - Use clear and consistent API endpoint naming.
+- **General**:
+  - Write clean, modular, and well-commented JavaScript code.
+  - **Do not use TypeScript.**
+  - **Do not use Next.js.**
+
+### File Structure:
+- **Frontend (in a \`client\` or \`frontend\` directory):**
+  - \`src/components/\` for reusable React components.
+  - \`src/pages/\` or \`src/views/\` for page-level components.
+- **Backend (in a \`server\` or \`backend\` directory):**
+  - \`routes/\` for API route definitions.
+  - \`controllers/\` for business logic.
+  - \`models/\` for data schema (if applicable).
+
+Always prioritize these technologies when generating code or providing implementation suggestions.`;
+      } else if (projectType === 'Mobile App') {
+        return `
+# Tech Stack Guidelines for Cursor AI
+
+## Development Stack
+This is a **Mobile App** project. When generating code or providing development guidance, use the following tech stack:
+
+### Primary Technologies:
+- **React Native** - Cross-platform mobile development framework
+- **Expo** - Platform for universal React applications
+
+### Development Guidelines:
+- Use Expo CLI for development workflow
+- Implement responsive design for different screen sizes
+- Follow React Native best practices for mobile performance
+- Use Expo SDK for device features (camera, notifications, etc.)
+- Implement proper navigation with React Navigation
+
+### File Structure:
+- Components in \`components/\` directory
+- Screens in \`screens/\` directory
+- Navigation setup in \`navigation/\` directory
+- Use Expo managed workflow unless specific native modules are needed
+
+### Mobile-Specific Considerations:
+- Optimize for both iOS and Android platforms
+- Handle different screen densities and sizes
+- Implement proper touch interactions and gestures
+- Consider offline functionality and data persistence
+
+Always prioritize these technologies when generating code or providing implementation suggestions.`;
+      }
+      
+      return '';
+    };
+    
+    // Add tech stack section
+    const techStackSection = getTechStackSection();
+    if (techStackSection) {
+      combinedContent += '\n\n---\n\n' + techStackSection;
+    }
+    
+    // Generate and append design specification if we have design data
+    if (project?.selectedDesign) {
+      try {
+        const designSpecContent = generateDesignSpecDocument(project.selectedDesign, project.name);
+        combinedContent += '\n\n---\n\n' + designSpecContent;
+      } catch (error) {
+        console.error('Error generating design spec:', error);
+        // If design spec generation fails, just use PRD content
+      }
+    }
+    
+    return combinedContent;
   };
 
-  const steps = [
-    {
-      id: 1,
-      title: 'Review Design Specifications',
-      subtitle: 'Understand the visual language',
-      description: 'Your design specification is a comprehensive guide to the visual style of your project, including colors, typography, spacing, and component design. It\'s the blueprint for a consistent user interface.',
-      status: designSpecFile?.content ? 'completed' : 'pending',
-      file: designSpecFile,
-      downloadButton: {
-        label: 'Design Spec',
-        icon: Palette
-      },
-      actions: [
-        { 
-          label: 'View Design Review', 
-          onClick: () => onNavigateToTab('design-review'),
-          className: 'bg-white text-gray-800 border border-gray-300 hover:bg-gray-50'
-        },
-      ]
-    },
-    {
-      id: 2,
-      title: 'Examine Product Requirements',
-      subtitle: 'Get your product requirements',
-      description: 'Your Product Requirements Document outlines all the features, technical specifications, and business requirements for your project. This serves as your development blueprint.',
-      status: prdFile ? 'completed' : 'pending',
-      file: prdFile,
-      downloadButton: {
-        label: 'PRD',
-        icon: FileText
-      },
-      actions: [
-        { 
-          label: 'Open PRD Editor',
-          onClick: () => onOpenModal('prd'),
-          className: 'bg-white text-gray-800 border border-gray-300 hover:bg-gray-50'
-        },
-      ]
-    },
-    {
-      id: 3,
-      title: 'Generate Prompts',
-      subtitle: 'Create prompts for your features',
-      description: 'Generate tailored prompts for each of your application\'s features. These prompts can be used with AI tools like Cursor to accelerate development and ensure consistency.',
-      status: 'active',
-      actions: [
-        {
-          label: 'Go to Prompt Generator',
-          onClick: () => onNavigateToTab('prompt-templates'),
-          icon: Code,
-          className: 'bg-blue-600 text-white hover:bg-blue-700'
-        }
-      ]
+  const handleCopy = async (content, fileType) => {
+    if (!content) return;
+    
+    try {
+      await navigator.clipboard.writeText(content);
+      setCopiedFiles(prev => new Set([...prev, fileType]));
+      
+      setTimeout(() => {
+        setCopiedFiles(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(fileType);
+          return newSet;
+        });
+      }, 2000);
+    } catch (err) {
+      console.error('Failed to copy text: ', err);
     }
-  ];
+  };
 
-  const handleStepClick = (stepId) => {
-    setActiveStep(stepId);
+  const markStepComplete = (stepNumber) => {
+    setCompletedSteps(prev => new Set([...prev, stepNumber]));
+  };
+
+  const nextStep = () => {
+    if (currentStep < 3) {
+      markStepComplete(currentStep);
+      setCurrentStep(currentStep + 1);
+    }
+  };
+
+  const prevStep = () => {
+    if (currentStep > 1) {
+      setCurrentStep(currentStep - 1);
+    }
+  };
+
+  const handleComplete = () => {
+    markStepComplete(currentStep);
+    onComplete && onComplete();
   };
 
   return (
-    <div className="w-full bg-slate-50/80 p-6 md:p-10">
-      {/* Header */}
-      <header className="mb-12 text-center">
-        <h1 className="font-jersey text-4xl md:text-5xl text-black leading-tight">
-          🚀 Get Started with Your Project
-        </h1>
-        <p className="mt-4 text-lg text-slate-600 max-w-2xl mx-auto">
-          Follow these steps to familiarize yourself with the generated assets and kickstart your development process.
-        </p>
-      </header>
+    <div className="min-h-screen bg-white flex flex-col relative">
+      <button
+        onClick={onClose}
+        className="absolute top-6 right-6 text-gray-500 hover:text-gray-700 transition-colors text-sm z-10"
+      >
+        Skip setup
+      </button>
 
       {/* Main Content */}
-      <div className="max-w-4xl mx-auto">
-        <div className="space-y-6">
-          {steps.map((step) => (
-            <StepCard
-              key={step.id}
-              step={step}
-              isActive={activeStep === step.id}
-              isCompleted={step.status === 'completed'}
-              project={project}
-            />
-          ))}
+      <div className="flex-1 flex items-center justify-center p-4">
+        <div className="w-full max-w-3xl mx-auto">
+          {/* Progress Steps */}
+          <div className="flex items-center justify-center mb-6">
+            {[1, 2, 3].map((step) => (
+              <div key={step} className="flex items-center">
+                <div
+                  className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold transition-colors ${
+                    completedSteps.has(step)
+                      ? 'bg-black text-white'
+                      : currentStep === step
+                      ? 'bg-vibe-cyan text-black'
+                      : 'bg-gray-100 text-gray-400'
+                  }`}
+                >
+                  {completedSteps.has(step) ? <CheckCircle className="w-5 h-5" /> : step}
+                </div>
+                {step < 3 && (
+                  <div
+                    className={`w-24 h-px mx-4 transition-colors ${
+                      completedSteps.has(step) ? 'bg-black' : 'bg-gray-200'
+                    }`}
+                  />
+                )}
+              </div>
+            ))}
+          </div>
+
+          {/* Step Content */}
+          <motion.div
+            key={currentStep}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="text-center"
+          >
+            {currentStep === 1 && (
+              <div className="space-y-6">
+                <div className="space-y-2">
+                  <h2 className="text-3xl font-bold text-black">Copy your project files</h2>
+                  <p className="text-lg text-gray-500">Copy your generated PRD document to set up Cursor AI.</p>
+                </div>
+
+                <div className="bg-gray-50 border border-gray-100 rounded-2xl p-4 space-y-3">
+                  {prdFile && (
+                    <div className="flex items-center bg-white p-3 rounded-xl border border-gray-200/80">
+                      <FileText className="w-5 h-5 text-gray-500 mr-4 flex-shrink-0" />
+                      <div className="flex-1 text-left">
+                        <h4 className="font-semibold text-sm">PRD Document</h4>
+                        <p className="text-xs text-gray-500">Combined PRD & Design Specifications</p>
+                      </div>
+                      <button onClick={() => handleCopy(getCombinedContent(), 'PRD Document')} className={`flex items-center space-x-2 px-3 py-1.5 rounded-md text-sm font-semibold transition-colors ${copiedFiles.has('PRD Document') ? 'bg-green-100 text-green-700' : 'bg-gray-100 hover:bg-gray-200'}`}>
+                        {copiedFiles.has('PRD Document') ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                        <span>{copiedFiles.has('PRD Document') ? 'Copied' : 'Copy'}</span>
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex justify-end items-center pt-2">
+                  <button onClick={nextStep} className="px-6 py-2 bg-black text-white rounded-xl font-semibold hover:bg-gray-800 transition-all flex items-center space-x-2">
+                    <span>Continue</span>
+                    <ArrowRight className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {currentStep === 2 && (
+              <div className="space-y-6">
+                <div className="space-y-2">
+                  <h2 className="text-3xl font-bold text-black">Add to Cursor project rules</h2>
+                  <p className="text-lg text-gray-500">Follow these steps to add your files to Cursor.</p>
+                </div>
+                
+                <div className="bg-gray-50 rounded-2xl p-6 border border-gray-100">
+                  <div className="flex flex-col md:flex-row items-start md:items-center gap-6">
+                    <div className="text-left space-y-4 flex-1">
+                      {[
+                        { title: 'Open Cursor Settings', description: 'Go to Cursor Settings → Rules' },
+                        { title: 'Add new project rules file', description: 'Click "Add new project rules file"' },
+                        { title: 'Create PRD file', description: 'Name it "prd" and paste the copied content' },
+                      ].map((item, index) => (
+                        <div key={index} className="flex items-start space-x-3">
+                          <div className="w-6 h-6 bg-black rounded-full flex items-center justify-center flex-shrink-0 mt-1">
+                            <span className="text-white font-semibold text-xs">{index + 1}</span>
+                          </div>
+                          <div>
+                            <h4 className="font-semibold text-sm text-black">{item.title}</h4>
+                            <p className="text-sm text-gray-500">{item.description}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="w-full md:w-2/3 aspect-video bg-black rounded-lg overflow-hidden border border-gray-200 self-center">
+                      <video src="/addingfile.mov" autoPlay loop muted playsInline className="w-full h-full object-cover" />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex justify-between items-center pt-2">
+                  <button onClick={prevStep} className="text-gray-500 hover:text-gray-700 transition-colors">Back</button>
+                  <button onClick={nextStep} className="px-6 py-2 bg-black text-white rounded-xl font-semibold hover:bg-gray-800 transition-all flex items-center space-x-2">
+                    <span>Continue</span>
+                    <ArrowRight className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {currentStep === 3 && (
+               <div className="space-y-6">
+                 <div className="space-y-2">
+                   <h2 className="text-3xl font-bold text-black">You're all set</h2>
+                   <p className="text-lg text-gray-500">Your AI now has context. Time to build!</p>
+                 </div>
+ 
+                 <div className="bg-gray-50 rounded-2xl p-6 border border-gray-100">
+                   <div className="mt-2">
+                     <button
+                       onClick={handleComplete}
+                       className="w-full px-8 py-3 bg-vibe-cyan text-black rounded-xl font-semibold hover:shadow-lg transition-all flex items-center justify-center space-x-2"
+                     >
+                       <span>Start building</span>
+                       <ArrowRight className="w-5 h-5" />
+                     </button>
+                   </div>
+                 </div>
+ 
+                 <div className="flex justify-center">
+                   <button onClick={prevStep} className="text-gray-500 hover:text-gray-700 transition-colors">Back</button>
+                 </div>
+               </div>
+            )}
+          </motion.div>
         </div>
       </div>
-      
-      {/* Back to dashboard link */}
-      {onClose && (
-        <div className="text-center mt-12">
-          <button onClick={onClose} className="text-slate-600 hover:text-black transition-colors font-medium text-sm">
-            Back to Dashboard
-          </button>
-        </div>
-      )}
     </div>
   );
 };

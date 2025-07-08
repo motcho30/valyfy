@@ -30,7 +30,19 @@ Subtle gradients, glow effects, and carefully placed highlights create a sense o
   };
 
   const designId = designData.id;
-  const description = designDescriptions[designId] || designDescriptions['minimalistic'];
+  
+  // Handle custom designs
+  let description;
+  if (designData.isCustom) {
+    description = {
+      philosophy: designData.analysis?.philosophy || designData.prompt || 'AI-generated design based on uploaded inspiration',
+      visualTheme: designData.description || 'AI-analyzed visual theme from uploaded design inspiration',
+      userExperience: 'Custom design optimized for your specific use case and visual preferences',
+      brandPersonality: designData.analysis?.style || 'Unique, Custom, AI-Enhanced'
+    };
+  } else {
+    description = designDescriptions[designId] || designDescriptions['minimalistic'];
+  }
 
   const document = `
 # Design Specification Document
@@ -61,9 +73,17 @@ ${description.brandPersonality}
 The ${designData.name} theme uses a carefully curated color palette designed to ${designId === 'tech-dark' ? 'create dramatic contrast and visual impact' : 'maintain clarity and reduce visual noise'}.
 
 ### Primary Colors
-${Object.entries(designData.colors).map(([key, color]) => 
-  `**${color.name}** (${color.hex}): ${color.description}`
-).join('\n')}
+${designData.colors && Object.keys(designData.colors).length > 0 ? 
+  Object.entries(designData.colors).map(([key, color]) => {
+    // Handle both object format and simple string format
+    if (typeof color === 'object' && color !== null) {
+      return `**${color.name || key}** (${color.hex || color.color || '#000000'}): ${color.description || 'Custom color from design analysis'}`;
+    } else {
+      return `**${key}** (${color}): Custom color from design analysis`;
+    }
+  }).join('\n') :
+  'Colors will be defined based on your custom design analysis'
+}
 
 ### Color Usage Guidelines
 ${designId === 'minimalistic' ? 

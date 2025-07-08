@@ -8,6 +8,7 @@ import ProjectCreationFlow from './components/ProjectCreationFlow';
 import ProjectDetail from './components/ProjectDetail';
 import Auth from './components/Auth';
 import DatabaseSetup from './components/DatabaseSetup';
+import CursorTips from './components/CursorTips';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import FilesGuidance from './components/FilesGuidance';
 import './index.css';
@@ -20,6 +21,7 @@ function AppContent() {
   const [projects, setProjects] = useState([]);
   const [loadingProjects, setLoadingProjects] = useState(false);
   const [showDatabaseSetup, setShowDatabaseSetup] = useState(false);
+  const [showGuidanceOnProjectLoad, setShowGuidanceOnProjectLoad] = useState(false);
   const { user, isAuthenticated, loading } = useAuth();
 
   // Load projects from Supabase and localStorage with timeout
@@ -148,7 +150,7 @@ function AppContent() {
     setCurrentView('project-detail');
   };
 
-  const handleProjectCreated = async (projectData) => {
+  const handleProjectCreated = async (projectData, showGuidance = false) => {
     try {
       console.log('🚀 Starting project creation process');
       console.log('📊 Received project data:', projectData);
@@ -171,6 +173,7 @@ function AppContent() {
         localStorage.setItem('fallback_projects', JSON.stringify(updatedProjects));
         setProjects(updatedProjects);
         setCurrentProject(newProject);
+        setShowGuidanceOnProjectLoad(showGuidance);
         setCurrentView('project-detail');
         return;
       }
@@ -271,39 +274,28 @@ function AppContent() {
         
         console.log('📊 File saving summary: saved', savedFiles.length, 'out of', projectData.generatedFiles.length, 'files');
       
-        // Automatically save design spec if a design was selected
+        // Combine PRD and Design Spec into a single context file
         if (createdProject.design_data) {
           try {
             const designSpecContent = generateDesignSpecDocument(createdProject.design_data, createdProject.name);
-            const fileData = {
-              fileName: 'design-specification.md',
-              fileType: 'Design Spec',
-              content: designSpecContent,
-              metadata: {
-                design_theme: createdProject.design_data.name,
-                creation_source: 'project_creation_flow'
-              }
-            };
-            const savedFile = await projectService.saveGeneratedFile(createdProject.id, fileData);
-            console.log('✅ Successfully saved design specification file with ID:', savedFile?.id);
+            const prdFile = savedFiles.find(f => f.type === 'PRD Document');
+            
+            if (prdFile) {
+              const prdContent = projectData.generatedFiles.find(f => f.type === 'PRD Document')?.content || '';
+              const combinedContent = `${prdContent}\n\n<hr>\n\n# Design Specification\n\n${designSpecContent}`;
 
-            // Add the design spec to the project's files for immediate UI update
-            if (savedFile) {
-              projectData.generatedFiles.push({
-                id: savedFile.id,
-                name: savedFile.name,
-                type: savedFile.type,
-                content: savedFile.content,
-                date: new Date(savedFile.createdAt).toISOString().split('T')[0],
-                size: `${Math.round(savedFile.content.length / 1024)}KB`,
-                icon: 'Palette'
-              });
+              const updatedFileData = { content: combinedContent };
+              await projectService.updateGeneratedFile(prdFile.id, updatedFileData);
+              console.log('✅ Successfully updated PRD file with design spec.');
+
+              const localPRDFile = projectData.generatedFiles.find(f => f.type === 'PRD Document');
+              if (localPRDFile) {
+                localPRDFile.content = combinedContent;
+              }
             }
           } catch (designSpecError) {
-            console.error('❌ Failed to save design specification file:', designSpecError);
+            console.error('❌ Failed to combine design spec into context file:', designSpecError);
           }
-        } else {
-          console.log('💾 No generated files to save');
         }
       } else {
         console.log('💾 No generated files to save');
@@ -331,6 +323,7 @@ function AppContent() {
       
       setProjects(updatedProjects);
       setCurrentProject(transformedProject);
+      setShowGuidanceOnProjectLoad(showGuidance);
       setCurrentView('project-detail');
       
       console.log('Project creation completed successfully');
@@ -352,6 +345,7 @@ function AppContent() {
       localStorage.setItem('fallback_projects', JSON.stringify(updatedProjects));
       setProjects(updatedProjects);
       setCurrentProject(newProject);
+      setShowGuidanceOnProjectLoad(showGuidance);
       setCurrentView('project-detail');
     }
   };
@@ -542,8 +536,9 @@ function AppContent() {
     );
   }
 
-  // Show auth if not authenticated
-  if (!isAuthenticated) {
+  // The landing page ('home') is public.
+  // For all other views, we check for authentication.
+  if (currentView !== 'home' && !isAuthenticated) {
     return <Auth />;
   }
 
@@ -582,10 +577,14 @@ function AppContent() {
         return currentProject ? (
           <ProjectDetail 
             project={currentProject}
-            onClose={() => setCurrentView('dashboard')}
+            onClose={() => {
+              setShowGuidanceOnProjectLoad(false);
+              setCurrentView('dashboard');
+            }}
             onNavigateToFeature={handleNavigateToFeature}
             onGenerateFile={handleGenerateFile}
             onDesignUpdate={(updatedDesign) => handleDesignUpdate(currentProject.id, updatedDesign)}
+            showGuidanceOnLoad={showGuidanceOnProjectLoad}
           />
         ) : (
           <div>Project not found</div>
@@ -612,6 +611,9 @@ function AppContent() {
         return (
           <FilesGuidance onClose={() => setCurrentView('dashboard')} />
         );
+
+      case 'cursor-tips':
+        return <CursorTips />;
 
       default:
         return <div>Not Found</div>;
