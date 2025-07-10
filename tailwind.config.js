@@ -39,7 +39,11 @@ module.exports = {
   					'background-position': '200%'
   				}
   			}
-  		}
+  		},
+      maxWidth: {
+        '8xl': '88rem',
+        '9xl': '96rem',
+      }
   	}
   },
   plugins: [

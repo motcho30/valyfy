@@ -119,11 +119,14 @@ const ProjectCreationFlow = ({ onClose, onProjectCreated }) => {
       
       // Generate PRD
       console.log('📝 Calling generatePRD...');
-      const prd = await generatePRD(appIdea, selectedFeatures, designToUse);
-      
+      const prd = await generatePRD(appIdea, selectedFeatures, designToUse, (partial) => {
+        // Update progressively so the UI can reflect progress if desired
+        setGeneratedPRD(partial);
+      });
+
       console.log('✅ PRD generated successfully');
       console.log('📊 PRD length:', prd?.length);
-      
+
       setGeneratedPRD(prd);
       
       // Update project with file count, features, design, and generated content
@@ -452,64 +455,22 @@ const ProjectCreationFlow = ({ onClose, onProjectCreated }) => {
         {/* Step 4: Generating Files */}
         {currentStep === 4 && (
           <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="text-center flex-grow flex flex-col items-center justify-center"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="flex-grow flex flex-col items-center justify-center text-center"
           >
-            <div className="flex justify-center mb-8">
-              <motion.div
-                animate={{ rotate: 360 }}
-                transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-                className="w-20 h-20 border-2 border-vibe-cyan border-t-transparent rounded-full"
-              />
-            </div>
-            
-            <h2 className="text-3xl font-light text-black mb-4">
-              Generating and creating your vibe coding project dashboard and files
+            <motion.div
+              animate={{ rotate: 360 }}
+              transition={{ duration: 1.5, repeat: Infinity, ease: 'linear' }}
+              className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full mb-8"
+            />
+            <h2 className="text-3xl font-bold text-slate-800 mb-4">
+              Generating your vibecoding project...
             </h2>
-            <p className="text-black/60 text-lg mb-12">
-              Setting up your complete workspace for {createdProject?.name} ✨
+            <p className="text-slate-500 max-w-md">
+              Our AI is crafting your documents and project files.
+              This will take about 30 seconds.
             </p>
-
-            <div className="space-y-4 max-w-md mx-auto">
-              <motion.div
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.5 }}
-                className="flex items-center text-black/60"
-              >
-                <div className="w-2 h-2 bg-vibe-cyan rounded-full mr-3"></div>
-                Creating your project dashboard
-              </motion.div>
-              <motion.div
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 1 }}
-                className="flex items-center text-black/60"
-              >
-                <div className="w-2 h-2 bg-vibe-cyan rounded-full mr-3"></div>
-                Generating vibe coding files
-              </motion.div>
-              <motion.div 
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 1.5 }}
-                className="flex items-center text-black/60"
-              >
-                <div className="w-2 h-2 bg-vibe-cyan rounded-full mr-3"></div>
-                Finalizing your workspace
-              </motion.div>
-            </div>
-
-            {generationError && (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className="mt-8 p-4 bg-red-50 border border-red-200 rounded-xl text-red-600 max-w-md mx-auto"
-              >
-                {generationError}
-              </motion.div>
-            )}
           </motion.div>
         )}
 

@@ -1,42 +1,45 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { motion, useScroll, useTransform } from 'framer-motion';
+import EcommercePromptDemo from './EcommercePromptDemo';
 
 const mainFeatures = [
-  {
-    title: "Get your project foundation in seconds",
-    description: "Custom cursor.config rules, PRDs, and design specs tailored to your stack.",
-    demo: (
-        <div className="w-full h-full bg-white rounded-2xl shadow-lg overflow-hidden">
-            <img 
-                src="/files.png" 
-                alt="Starter pack files" 
-                className="w-full h-full object-cover"
-            />
-        </div>
-    )
-  },
-  {
-    title: "Brainstorm like you have a co-founder",
-    description: "Generate feature breakdowns, roadmaps, and get PM-style feedback on your vision.",
-    demo: (
-        <div className="w-full h-full bg-white rounded-2xl shadow-lg overflow-hidden">
-            <img 
-                src="/pm.png" 
-                alt="AI Product Manager" 
-                className="w-full h-full object-cover"
-            />
-        </div>
-    )
-  },
   {
     title: "Copy-paste prompts that actually work",
     description: "Pixel-perfect UI prompts, backend setup, and debugging helpers that catch real issues.",
     demo: (
+        <EcommercePromptDemo />
+    )
+  },
+  {
+    title: "Vibecode with the PRD method",
+    description: "Instantly generate your project's foundation. Get custom cursor.config rules, PRDs, and design specs tailored to your stack and skip the setup.",
+    demo: (
         <div className="w-full h-full bg-white rounded-2xl shadow-lg overflow-hidden">
-            <img 
-                src="/pg.png" 
-                alt="Prompt generator" 
+            <video 
+                src="/file.mov" 
+                alt="Starter pack files" 
                 className="w-full h-full object-cover"
+                autoPlay
+                loop
+                muted
+                playsInline
+            />
+        </div>
+    )
+  },
+  {
+    title: "Your AI co-founder for brainstorming",
+    description: "Generate feature breakdowns, roadmaps, and get PM-style feedback on your vision. Turn your idea into a plan.",
+    demo: (
+        <div className="w-full h-full bg-white rounded-2xl shadow-lg overflow-hidden">
+            <video 
+                src="/pm.mov" 
+                alt="AI Product Manager" 
+                className="w-full h-full object-cover"
+                autoPlay
+                loop
+                muted
+                playsInline
             />
         </div>
     )
@@ -62,8 +65,8 @@ const StickyScrollFeatures = () => {
     return (
       <section ref={scrollRef} className="py-20 relative" style={{ height: `${mainFeatures.length * 100}vh` }}>
         <div className="sticky top-0 h-screen flex items-center justify-center overflow-hidden">
-          <div className="max-w-6xl w-full mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-            <div className="pr-8">
+          <div className="w-full mx-auto grid grid-cols-1 lg:grid-cols-2 gap-16 items-center px-12">
+            <div>
               {mainFeatures.map((feature, index) => (
                 <motion.div
                   key={index}
@@ -80,7 +83,7 @@ const StickyScrollFeatures = () => {
               ))}
             </div>
             
-            <div className="w-full h-[500px] relative">
+            <div className="w-full h-[700px] relative flex items-center justify-center">
                {mainFeatures.map((feature, index) => (
                    <motion.div
                         key={index}

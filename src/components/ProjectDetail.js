@@ -7,8 +7,10 @@ import DesignReview from './DesignReview';
 import ProductManagerTab from './ProductManagerTab';
 import { generatePromptForFeature } from '../services/promptGeneratorService';
 import { useProjectFiles } from '../hooks/useProjectFiles';
-import { Check, Copy, Zap, History, GripVertical, Palette, ArrowRight, Plus, Bot } from 'lucide-react';
+import { Check, Copy, Zap, History, GripVertical, Palette, ArrowRight, Plus, Bot, AlertTriangle, Users, Download } from 'lucide-react';
 import CursorTips from './CursorTips';
+import { generateDesignSpecDocument } from '../services/designSpecService';
+import EmbeddedPromptGenerator from './EmbeddedPromptGenerator';
 
 const AddFeatureModal = ({ isOpen, onClose, newFeatureName, setNewFeatureName, onAddFeature }) => {
   if (!isOpen) return null;
@@ -218,10 +220,32 @@ const ProjectDetail = ({ project, onClose, onGenerateFile, onDesignUpdate, onNav
           {renderTabContent()}
         </motion.div>
       </div>
-      <Modal isOpen={activeModal === 'design-spec'} onClose={closeModal} title="Design Specifications"><DesignSpec project={project} onUpdate={onDesignUpdate} /></Modal>
-      <Modal isOpen={activeModal === 'prd'} onClose={closeModal} title="Product Requirements Document">
-        <div className="p-8">
-          {loadingFiles ? <div className="flex items-center justify-center py-20"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-slate-900"></div><span className="ml-3 text-slate-600">Loading PRD content...</span></div> : generatedFiles.prd ? <PRDSection content={generatedFiles.prd} project={project} onDownload={() => console.log('PRD downloaded')} onUpdate={handlePRDUpdate} /> : <EmptyState title="Product Requirements Document" description="Create comprehensive technical and business requirements for your project" icon="📋" onGenerate={async () => { const prdFile = project.generatedFiles?.find(f => f.type === 'PRD Document'); if (prdFile && !prdFile.content) { await loadFileContent(prdFile.id, 'PRD Document'); } else { onGenerateFile('prd-generator', project); } closeModal(); }} />}
+      <Modal isOpen={activeModal === 'project-context'} onClose={closeModal} title="Project Context">
+        <div className="p-8 space-y-10">
+          <DesignSpec project={project} onUpdate={onDesignUpdate} />
+          {loadingFiles ? (
+            <div className="flex items-center justify-center py-20">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-slate-900"></div>
+              <span className="ml-3 text-slate-600">Loading PRD content...</span>
+            </div>
+          ) : generatedFiles.prd ? (
+            <PRDSection content={generatedFiles.prd} project={project} onDownload={() => console.log('PRD downloaded')} onUpdate={handlePRDUpdate} />
+          ) : (
+            <EmptyState
+              title="Product Requirements Document"
+              description="Create comprehensive technical and business requirements for your project"
+              icon="📋"
+              onGenerate={async () => {
+                const prdFile = project.generatedFiles?.find(f => f.type === 'PRD Document');
+                if (prdFile && !prdFile.content) {
+                  await loadFileContent(prdFile.id, 'PRD Document');
+                } else {
+                  onGenerateFile('prd-generator', project);
+                }
+                closeModal();
+              }}
+            />
+          )}
         </div>
       </Modal>
       
@@ -298,48 +322,180 @@ const ProjectOverview = ({ project, generatedFiles, setActiveTab, onOpenModal, o
   };
   const designData = getDesignData();
 
-  const parsePRDForOverview = (prdContent) => {
-    if (!prdContent) return null;
-    const sections = {};
-    const lines = prdContent.split('\n');
-    let currentSectionKey = '';
-    
-    const sectionMapping = {
-      'problem statement': 'problemStatement',
-      'solution': 'solution',
-      'target audience': 'targetAudience',
-      'user flow': 'userFlow',
+  // Download combined Project Context (Design Spec + PRD)
+  const handleDownloadProjectContext = () => {
+    try {
+      const designDoc = generateDesignSpecDocument(designData, project.name);
+      const prdDoc = generatedFiles.prd || 'PRD not generated yet.';
+      const combined = `# Project Context - ${project.name}\n\n## Design Specification\n\n${designDoc}\n\n---\n\n## Product Requirements Document\n\n${prdDoc}`;
+
+      const blob = new Blob([combined], { type: 'text/markdown' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${project.name.replace(/\s+/g, '-')}-project-context.md`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Error downloading Project Context:', error);
+    }
+  };
+  // ---------------- ENHANCED PRD CARD ------------------
+  const EnhancedPRDCard = ({ generatedFiles, onOpenModal, project }) => {
+    const extractPRDSummary = (prdContent) => {
+      if (!prdContent) return null;
+
+      const summary = {
+        problemStatement: null,
+        solution: null,
+        targetAudience: null,
+        keyFeatures: [],
+        objectives: [],
+        timeline: null
+      };
+
+      const sections = prdContent.split(/#{1,3}\s+/i);
+
+      sections.forEach((section) => {
+        const lines = section.split('\n').filter((l) => l.trim());
+        if (!lines.length) return;
+
+        const title = lines[0].toLowerCase();
+        const content = lines.slice(1).join('\n');
+
+        const firstBulletOrLine = (txt) =>
+          txt
+            .split('\n')
+            .find((ln) => ln.trim() && !ln.startsWith('#'))
+            ?.replace(/^[-*•]\s*/, '')
+            ?.trim();
+
+        if (title.includes('problem')) {
+          const t = firstBulletOrLine(content);
+          if (t) summary.problemStatement = t;
+        }
+
+        if (title.includes('solution') || title.includes('approach')) {
+          const t = firstBulletOrLine(content);
+          if (t) summary.solution = t;
+        }
+
+        if (title.includes('target') || title.includes('audience') || title.includes('user')) {
+          const t = firstBulletOrLine(content);
+          if (t) summary.targetAudience = t;
+        }
+
+        if (title.includes('feature') || title.includes('functional')) {
+          summary.keyFeatures = content
+            .split('\n')
+            .filter((ln) => ln.trim().match(/^[-*•]/))
+            .map((ln) => ln.replace(/^[-*•]\s*/, '').trim())
+            .filter((ln) => ln.length > 10)
+            .slice(0, 4);
+        }
+
+        if (title.includes('objective') || title.includes('metric') || title.includes('kpi')) {
+          summary.objectives = content
+            .split('\n')
+            .filter((ln) => ln.trim().match(/^[-*•]/))
+            .map((ln) => ln.replace(/^[-*•]\s*/, '').trim())
+            .filter((ln) => ln.length > 5)
+            .slice(0, 3);
+        }
+
+        if (title.includes('timeline') || title.includes('roadmap') || title.includes('scope')) {
+          const match = content.match(/(\d+)\s*(month|week|day)s?/i);
+          if (match) {
+            summary.timeline = `${match[1]} ${match[2]}${parseInt(match[1]) > 1 ? 's' : ''}`;
+          }
+        }
+      });
+
+      return summary;
     };
 
-    lines.forEach(line => {
-      const trimmed = line.trim();
-      if (trimmed.startsWith('## ')) {
-        const headerText = trimmed.replace(/^##\s*/, '').toLowerCase();
-        const foundKey = Object.keys(sectionMapping).find(key => headerText.includes(key));
-        if (foundKey) {
-          currentSectionKey = sectionMapping[foundKey];
-          sections[currentSectionKey] = '';
-        } else {
-          currentSectionKey = '';
-        }
-      } else if (currentSectionKey && trimmed) {
-        sections[currentSectionKey] += line + '\n';
-        }
-    });
+    const prdSummary = extractPRDSummary(generatedFiles.prd);
 
-    Object.keys(sections).forEach(key => {
-      const content = sections[key];
-      if (content) {
-        const firstParagraph = content.split('\n\n')[0];
-        sections[key] = firstParagraph.replace(/^[*-]\s*/gm, '').trim();
+    if (!prdSummary) {
+      return (
+        <div className="space-y-3 text-sm">
+          <p className="text-gray-400 text-sm">PRD not generated yet.</p>
+          <button onClick={() => onOpenModal('prd')} className="text-xs text-vibe-cyan hover:underline">
+            Generate PRD
+          </button>
+        </div>
+      );
     }
-    });
 
-    return sections;
+    return (
+      <div className="space-y-4">
+        {/* Problem & Solution */}
+        <div className="space-y-3">
+          {prdSummary.problemStatement && (
+            <div>
+              <div className="flex items-center space-x-2 mb-2">
+                <AlertTriangle className="w-4 h-4 text-red-500" />
+                <span className="text-xs font-semibold text-gray-700 uppercase tracking-wide">Problem</span>
+              </div>
+              <p className="text-xs text-gray-600 leading-relaxed pl-6">{prdSummary.problemStatement}</p>
+            </div>
+          )}
+          {prdSummary.solution && (
+            <div>
+              <div className="flex items-center space-x-2 mb-2">
+                <div className="w-4 h-4 bg-blue-100 rounded-full flex items-center justify-center" />
+                <span className="text-xs font-semibold text-gray-700 uppercase tracking-wide">Solution</span>
+              </div>
+              <p className="text-xs text-gray-600 leading-relaxed pl-6">{prdSummary.solution}</p>
+            </div>
+          )}
+        </div>
+
+        {/* Metrics */}
+        <div className="bg-gray-50 rounded-lg p-3 border border-gray-100">
+          <div className="grid grid-cols-2 gap-3 text-center">
+            <div>
+              <div className="text-lg font-bold text-gray-900">{prdSummary.keyFeatures.length || project.features?.length || 6}</div>
+              <div className="text-xs text-gray-500">Features</div>
+            </div>
+            <div>
+              <div className="text-lg font-bold text-gray-900">{prdSummary.objectives.length || 4}</div>
+              <div className="text-xs text-gray-500">KPIs</div>
+            </div>
+          </div>
+        </div>
+
+        {/* Audience */}
+        {prdSummary.targetAudience && (
+          <div>
+            <div className="flex items-center space-x-2 mb-2">
+              <Users className="w-4 h-4 text-green-500" />
+              <span className="text-xs font-semibold text-gray-700 uppercase tracking-wide">Target Users</span>
+            </div>
+            <p className="text-xs text-gray-600 leading-relaxed pl-6">{prdSummary.targetAudience}</p>
+          </div>
+        )}
+
+        {/* Features */}
+        {prdSummary.keyFeatures.length > 0 && (
+          <div>
+            <div className="text-xs font-semibold text-gray-700 uppercase tracking-wide mb-2">Key Features</div>
+            <div className="space-y-1">
+              {prdSummary.keyFeatures.slice(0, 3).map((f, i) => (
+                <div key={i} className="flex items-center space-x-2">
+                  <div className="w-1.5 h-1.5 bg-vibe-cyan rounded-full" />
+                  <span className="text-xs text-gray-600 truncate">{f.substring(0, 40)}...</span>
+                </div>
+              ))}
+              {prdSummary.keyFeatures.length > 3 && (
+                <div className="text-xs text-gray-400 pl-3.5">+{prdSummary.keyFeatures.length - 3} more features</div>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+    );
   };
-
-  const parsedPRD = parsePRDForOverview(generatedFiles.prd);
-
   const storedPrompts = React.useMemo(() => {
     if (!project?.id) return [];
     try {
@@ -355,7 +511,7 @@ const ProjectOverview = ({ project, generatedFiles, setActiveTab, onOpenModal, o
       </div>
       
       {/* Setup Guide Section */}
-      <div className="bg-gradient-to-r from-vibe-cyan/10 to-green-100 border border-vibe-cyan/20 rounded-2xl p-6">
+      <div className="bg-gray-100 border border-gray-200 rounded-2xl p-6">
         <div className="flex items-center justify-between">
           <div>
             <h3 className="text-lg font-semibold text-gray-900 mb-2">
@@ -375,11 +531,18 @@ const ProjectOverview = ({ project, generatedFiles, setActiveTab, onOpenModal, o
         </div>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        {/* PROJECT CONTEXT CARD */}
         <div className="border border-gray-200 rounded-2xl p-6 shadow-sm hover:shadow-md transition-colors group">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="font-semibold text-gray-900">Design Specifications</h3>
-            <button onClick={() => onOpenModal('design-spec')} className="px-3 py-1 text-xs font-semibold bg-gray-100 border border-gray-200 text-gray-700 rounded-md hover:bg-gray-200 transition">View</button>
+            <h3 className="font-semibold text-gray-900">Project Context</h3>
+            <div className="flex items-center space-x-2">
+              <button onClick={() => onOpenModal('project-context')} className="px-3 py-1 text-xs font-semibold bg-gray-100 border border-gray-200 text-gray-700 rounded-md hover:bg-gray-200 transition">View</button>
+              <button onClick={handleDownloadProjectContext} className="p-2 bg-gray-100 border border-gray-200 rounded-md hover:bg-gray-200 transition" title="Download Project Context">
+                <Download className="w-4 h-4 text-gray-700" />
+              </button>
+            </div>
           </div>
+          {/* Design Summary */}
           <div className="space-y-3 text-sm">
             <div className="text-xs uppercase tracking-wide text-gray-500">Theme</div>
             <div className="font-medium text-gray-800">{designData.name}</div>
@@ -394,56 +557,32 @@ const ProjectOverview = ({ project, generatedFiles, setActiveTab, onOpenModal, o
                 </div>
               ))}
             </div>
-          </div>
-        </div>
-        <div className="border border-gray-200 rounded-2xl p-6 shadow-sm hover:shadow-md transition-colors group">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="font-semibold text-gray-900">Product Requirements</h3>
-            <button onClick={() => onOpenModal('prd')} className="px-3 py-1 text-xs font-semibold bg-gray-100 border border-gray-200 text-gray-700 rounded-md hover:bg-gray-200 transition">View</button>
-          </div>
-          {generatedFiles.prd && parsedPRD ? (
-            <VisualPRDCard parsedPRD={parsedPRD} />
-          ) : (
-            <div className="space-y-3 text-sm">
-              <p className="text-gray-400 text-sm">PRD not generated yet.</p>
-              <button 
-                onClick={async () => { const prdFile = project.generatedFiles?.find(f => f.type === 'PRD Document'); if (prdFile && !prdFile.content) { await loadFileContent(prdFile.id, 'PRD Document'); } else { onGenerateFile('prd-generator', project); }}}
-                className="text-xs text-vibe-cyan hover:underline"
-              >
-                Generate PRD
-              </button>
+            {/* Typography */}
+            <div className="text-xs uppercase tracking-wide text-gray-500">Typography</div>
+            <div className="flex space-x-6">
+              <div>
+                <span className="text-[10px] text-gray-500">Primary</span>
+                <div className="text-sm font-medium text-gray-800" style={{ fontFamily: designData.typography?.primary }}>{designData.typography?.primary}</div>
+              </div>
+              {designData.typography?.secondary && (
+                <div>
+                  <span className="text-[10px] text-gray-500">Secondary</span>
+                  <div className="text-sm font-medium text-gray-800" style={{ fontFamily: designData.typography.secondary }}>{designData.typography.secondary}</div>
+                </div>
+              )}
             </div>
-          )}
-        </div>
-        <div className="border border-gray-200 rounded-2xl p-6 shadow-sm hover:shadow-md transition-colors group">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="font-semibold text-gray-900">Prompt Templates</h3>
-            <button onClick={() => setActiveTab('prompt-templates')} className="px-3 py-1 text-xs font-semibold bg-gray-100 border border-gray-200 text-gray-700 rounded-md hover:bg-gray-200 transition">View</button>
           </div>
-          <div className="space-y-3 text-sm">
-            {storedPrompts.length > 0 ? (
-              <div className="space-y-2 pt-2">
-                <div className="text-xs text-gray-500 mb-2">Recent Saved Prompts</div>
-                {storedPrompts.slice(-3).map((p)=> (
-                  <div key={p.id} className="flex items-start space-x-2">
-                    <div className="w-2 h-2 bg-green-500 rounded-full flex-shrink-0 mt-1.5"></div>
-                    <div className="text-xs text-gray-700 line-clamp-2">
-                      <span className="font-medium mr-1">{p.feature}</span>
-                      <span className="text-gray-500">• {new Date(p.createdAt).toLocaleDateString()}</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="flex flex-wrap gap-2">
-                {(project.features || project.selectedFeatures || []).slice(0,3).map((f,idx) => (
-                  <span key={idx} className="px-2 py-0.5 bg-gray-100 text-gray-700 rounded-full text-xs">{f}</span>
-                ))}
-                {(project.features || project.selectedFeatures || []).length > 3 && (
-                  <span className="px-2 py-0.5 border border-gray-300 rounded-full text-xs text-gray-500">+{(project.features || project.selectedFeatures || []).length-3}</span>
-                )}
-              </div>
-            )}
+
+          {/* PRD Summary */}
+          <div className="mt-6">
+            <EnhancedPRDCard generatedFiles={generatedFiles} onOpenModal={onOpenModal} project={project} />
+          </div>
+        </div>
+        {/* Prompt Templates Card */}
+        <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm h-[400px]">
+          <h3 className="text-lg font-semibold text-gray-800 mb-4">Prompt Templates</h3>
+          <div className="h-[calc(100%-36px)]">
+            <EmbeddedPromptGenerator project={project} />
           </div>
         </div>
       </div>
@@ -461,10 +600,66 @@ const VisualPRDCard = ({ parsedPRD }) => {
 
   const getIcon = (iconName) => {
     const icons = {
-      AlertTriangle: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>,
-      CheckCircle: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>,
-      Users: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.653-.124-1.28-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.653.124-1.28.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg>,
-      GitMerge: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 15l3-3m0 0l-3-3m3 3H9a3 3 0 00-3 3v1m0 0v1a3 3 0 003 3h3m-3-3h3m0 0a3 3 0 003-3V9m-6 9v-1m0 0v-1a3 3 0 013-3h3m-6 0h.01" /></svg>,
+      AlertTriangle: (
+        <svg
+          className="w-5 h-5"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+          />
+        </svg>
+      ),
+      CheckCircle: (
+        <svg
+          className="w-5 h-5"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+          />
+        </svg>
+      ),
+      Users: (
+        <svg
+          className="w-5 h-5"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.653-.124-1.28-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.653.124-1.28.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
+          />
+        </svg>
+      ),
+      GitMerge: (
+        <svg
+          className="w-5 h-5"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M18 15l3-3m0 0l-3-3m3 3H9a3 3 0 00-3 3v1m0 0v1a3 3 0 003 3h3m-3-3h3m0 0a3 3 0 003-3V9m-6 9v-1m0 0v-1a3 3 0 013-3h3m-6 0h.01"
+          />
+        </svg>
+      ),
     };
     return <div className="text-slate-500">{icons[iconName]}</div>;
   };
@@ -478,7 +673,9 @@ const VisualPRDCard = ({ parsedPRD }) => {
               {getIcon(icon)}
               <h4 className="text-sm font-semibold text-slate-700">{title}</h4>
             </div>
-            <p className="text-xs text-slate-500 leading-relaxed truncate">{parsedPRD[key].split('\n')[0]}</p>
+            <p className="text-xs text-slate-500 leading-relaxed truncate max-w-full">
+              {parsedPRD[key]}
+            </p>
           </div>
         )
       ))}

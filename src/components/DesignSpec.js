@@ -340,9 +340,6 @@ const DesignSpec = ({ project, onUpdate }) => {
           {/* Spacing & Layout */}
           <SpacingLayout spacing={designData.spacing} />
 
-          {/* UI Components Library */}
-          <UIComponents designId={project?.selectedDesign?.id || project?.designId} />
-
           {/* Components */}
           <Components components={designData.components} />
         </div>

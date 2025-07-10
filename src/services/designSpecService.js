@@ -1,4 +1,59 @@
 export const generateDesignSpecDocument = (designData, projectName) => {
+  // --- SAFETY NET -------------------------------------------------
+  // Ensure essential sub-objects exist so template literals below
+  // don’t throw runtime errors when certain design fields are missing.
+  // These defaults are lightweight and will be overridden by any
+  // provided values in designData.
+
+  if (!designData) designData = {};
+
+  // Default typography
+  if (!designData.typography) {
+    designData.typography = {
+      primary: 'Inter',
+      headings: {
+        h1: { size: '48px', weight: '700', spacing: '-0.02em' },
+        h2: { size: '36px', weight: '600', spacing: '-0.02em' },
+        h3: { size: '24px', weight: '500', spacing: '-0.01em' }
+      },
+      body: { size: '16px', weight: '400', lineHeight: '1.6' }
+    };
+  } else {
+    // Ensure nested objects
+    designData.typography.primary = designData.typography.primary || 'Inter';
+    designData.typography.headings = designData.typography.headings || {
+      h1: { size: '48px', weight: '700', spacing: '-0.02em' },
+      h2: { size: '36px', weight: '600', spacing: '-0.02em' },
+      h3: { size: '24px', weight: '500', spacing: '-0.01em' }
+    };
+    ['h1','h2','h3'].forEach((lvl) => {
+      if (!designData.typography.headings[lvl]) {
+        designData.typography.headings[lvl] = { size: '32px', weight: '600', spacing: '-0.01em' };
+      }
+    });
+    designData.typography.body = designData.typography.body || { size: '16px', weight: '400', lineHeight: '1.6' };
+  }
+
+  // Default spacing
+  if (!designData.spacing) {
+    designData.spacing = {
+      baseUnit: '8px',
+      sections: '48px',
+      cards: '24px',
+      buttons: '12px 24px'
+    };
+  }
+
+  // Default components
+  if (!designData.components) {
+    designData.components = {
+      borderRadius: '8px',
+      shadows: 'subtle layered shadows',
+      buttons: 'solid accent buttons',
+      cards: 'standard cards with soft shadow'
+    };
+  }
+  // ---------------------------------------------------------------
   const designDescriptions = {
     'minimalistic': {
       philosophy: `The Minimalistic/Modern design philosophy centers on the principle that "less is more." This design approach emphasizes clarity, simplicity, and purposeful use of space. Every element serves a function, and visual clutter is eliminated to focus the user's attention on what matters most - the content and core functionality.

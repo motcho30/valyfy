@@ -74,16 +74,6 @@ const FAQ = () => {
             <FAQItem key={index} faq={faq} />
           ))}
         </div>
-        <div className="text-center mt-12">
-            <p className="text-lg text-gray-600">Still have questions?</p>
-            <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="mt-4 bg-black text-white px-8 py-3 rounded-lg font-semibold text-lg hover:bg-gray-800 transition-all duration-200"
-            >
-                Contact Support
-            </motion.button>
-        </div>
       </div>
     </section>
   );

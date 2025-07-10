@@ -1,8 +1,9 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import StickyScrollFeatures from './StickyScrollFeatures';
-import AIToolsSection from './AIToolsSection';
+import FeatureListSection from './FeatureListSection';
 import FAQ from './FAQ';
+import AIToolsSection from './AIToolsSection';
+import AITipsSection from './AITipsSection';
 
 const Hero = ({ onNavigateToFeature }) => {
   return (
@@ -29,7 +30,7 @@ const Hero = ({ onNavigateToFeature }) => {
         
         <div className="relative z-10">
           <h1 className="font-bold text-4xl md:text-5xl lg:text-6xl xl:text-7xl text-black leading-tight max-w-5xl mx-auto mb-6 tracking-tight">
-            Your all in one<br />vibe coding toolkit
+          All-in-one<br />vibe coding toolkit
           </h1>
           <p className="text-xl md:text-2xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
             Everything you need to launch your next app—organised, streamlined, and ready to go.
@@ -51,23 +52,20 @@ const Hero = ({ onNavigateToFeature }) => {
               <span className="absolute -top-2 -right-2 text-xl">✨</span>
             </motion.button>
             
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              className="text-black/60 hover:text-black text-lg underline transition-colors"
-            >
-              Watch demo first
-            </motion.button>
+  
           </motion.div>
         </div>
       </motion.section>
 
       {/* Sticky Scroll Features Section */}
-      <StickyScrollFeatures />
+      <FeatureListSection />
       
       {/* AI Tools Section */}
       <AIToolsSection />
       
+      {/* AI Tips Section */}
+      <AITipsSection />
+
       {/* FAQ Section */}
       <FAQ />
 

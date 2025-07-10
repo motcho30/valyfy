@@ -135,8 +135,13 @@ function AppContent() {
   useEffect(() => {
     const handleNavigateGuidance = () => setCurrentView('files-guidance');
     window.addEventListener('navigate-files-guidance', handleNavigateGuidance);
+
+    const handleNavigateAuth = () => setCurrentView('auth');
+    window.addEventListener('navigate-to-auth', handleNavigateAuth);
+
     return () => {
       window.removeEventListener('navigate-files-guidance', handleNavigateGuidance);
+      window.removeEventListener('navigate-to-auth', handleNavigateAuth);
     };
   }, []);
 

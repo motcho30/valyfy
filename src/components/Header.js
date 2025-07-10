@@ -1,10 +1,8 @@
 import React, { useState } from 'react';
 import { motion, useScroll, useTransform, AnimatePresence } from 'framer-motion';
-import FeaturesMenu from './FeaturesMenu';
 
 const Header = ({ onNavigateToDashboard }) => {
   const { scrollY: motionScrollY } = useScroll();
-  const [showFeaturesMenu, setShowFeaturesMenu] = useState(false);
   
   // Transform scroll position to opacity (fade out when scrolling down)
   const opacity = useTransform(motionScrollY, [0, 200], [1, 0.3]);
@@ -24,23 +22,11 @@ const Header = ({ onNavigateToDashboard }) => {
           <nav className="flex space-x-6">
             <div className="relative">
               <button 
-                onClick={() => setShowFeaturesMenu(!showFeaturesMenu)}
                 className="text-gray-700 hover:text-black transition-colors duration-200"
               >
                 Features
               </button>
-              <AnimatePresence>
-                {showFeaturesMenu && (
-                  <motion.div
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -10 }}
-                    transition={{ duration: 0.2 }}
-                  >
-                    <FeaturesMenu />
-                  </motion.div>
-                )}
-              </AnimatePresence>
+
             </div>
             <a href="#about" className="text-gray-700 hover:text-black transition-colors duration-200">
               About valyfy
