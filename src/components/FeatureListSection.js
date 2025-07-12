@@ -1,6 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import EcommercePromptDemo from './EcommercePromptDemo';
+import ProjectStarterKit from './ProjectStarterKit';
 
 const features = [
   {
@@ -11,16 +12,7 @@ const features = [
   {
     title: "Instant Project Foundation",
     description: "Generate custom cursor.config rules, PRDs, and design specs tailored to your exact stack. Skip the boring setup, and jump straight to building.",
-    demo: (
-      <div className="w-full h-full bg-white rounded-2xl shadow-lg overflow-hidden">
-        <video 
-            src="/file.mov" 
-            alt="Starter pack files" 
-            className="w-full h-full object-cover"
-            autoPlay loop muted playsInline
-        />
-      </div>
-    ),
+    demo: <ProjectStarterKit />,
   },
   {
     title: "AI Co-Founder Mode",

@@ -4,6 +4,8 @@
   "private": true,
   "dependencies": {
     "@fontsource/jersey-15": "^5.2.6",
+    "@stripe/react-stripe-js": "^3.7.0",
+    "@stripe/stripe-js": "^7.4.0",
     "@supabase/supabase-js": "^2.50.2",
     "@testing-library/jest-dom": "^5.16.4",
     "@testing-library/react": "^13.3.0",

@@ -1,171 +1,106 @@
-import React, { useState, useRef } from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { generatePromptForFeature } from '../services/promptGeneratorService';
-import { Zap, Copy, Check } from 'lucide-react';
-import DragAndDropAnimation from './DragAndDropAnimation';
+import PromptModal from './PromptModal';
 
-const dummyProjectContext = {
-    name: 'E-commerce Site',
-    type: 'Web Application',
-    description: 'A modern online store for selling goods.',
-    framework: 'React',
-    designSystem: 'Tailwind CSS',
-    features: ['Product Page', 'Shopping Cart', 'Checkout', 'Order History']
-};
+const promptTemplates = [
+  {
+    id: 1,
+    title: "SaaS Landing Page",
+    description: "Build a modern SaaS landing page with animations and smooth scrolls",
+    prompt: `I want you to implement a conversion-focused SaaS landing page.
+Goal: Instantly captivate visitors, highlight product benefits, generate leads.
+User Experience: Crisp design, clear feature highlights, and compelling CTAs for sign-ups.
+Implementation Focus: Emphasize fast loading, mobile responsiveness, minimal-friction contact forms, and strong brand visuals.
+Build Action: Immediately code the interactive layout with headings, hero sections, calls to action, and streamlined sign-up forms.`
+  },
+  {
+    id: 2,
+    title: "Authentication System",
+    description: "Build a complete authentication system for your webapp",
+    prompt: `Implement user authentication for this project.
+
+- Add registration, login, and logout functionality.
+- Store user credentials securely (use best practices for password hashing and storage).
+- After login, redirect users to {post_login_url}.
+- After logout, redirect users to {post_logout_url}.
+- Restrict access to {protected_routes_or_pages} so only authenticated users can access them.
+- Use environment variables for all sensitive configuration.
+- Add clear comments and a brief README section explaining how to test authentication.
+
+If any details are missing, ask for clarification before proceeding.`
+  },
+  {
+    id: 3,
+    title: "Stripe Payment System",
+    description: "Implement a complete payment system with Stripe integration",
+    prompt: `Integrate Stripe payment processing into this project.
+
+- Add a payment flow so users can pay for {product_or_service}.
+- Place the payment UI in {ui_component_location}.
+- On successful payment, redirect to {success_url}.
+- On payment failure, redirect to {failure_url}.
+- Use {currency} as the transaction currency.
+- Ensure all Stripe keys are managed securely via environment variables.
+- Follow best security practices and do not hardcode secrets.
+- Add clear code comments and a brief README section explaining how to test the payment flow.
+
+If any information is missing, ask for clarification before proceeding.`
+  },
+  {
+    id: 4,
+    title: "OpenAI API Wrapper",
+    description: "Create OpenAI wrapper functionality for your app",
+    prompt: `Integrate a new feature using the OpenAI API.
+
+- **Functionality:** I want users to {describe_user_goal_or_action_with_openai}, for example: {example_input} should result in {example_output}.
+- **Location:** Add this feature to {ui_component_location} in the app.
+- **API Documentation:** Before implementation, consult the latest OpenAI API docs here to understand usage, models, and best practices: https://platform.openai.com/docs
+- **Model Selection:** Based on the docs and use case, choose the most suitable OpenAI model considering performance, cost, and capabilities.
+- **Security:** Manage all API keys and configuration securely via environment variables; do not expose secrets in frontend code.
+- **Error Handling:** Implement graceful error handling and user feedback for API failures or unexpected responses.
+- **Testing & Docs:** Add clear comments and a README section explaining how to test this OpenAI integration.
+- If any details are missing or unclear, ask for clarification before proceeding.`
+  }
+];
 
 const EcommercePromptDemo = () => {
-  const [availableTags, setAvailableTags] = useState([
-    { id: 1, name: 'Product Page' },
-    { id: 2, name: 'Shopping Cart' },
-    { id: 3, name: 'Checkout' },
-    { id: 4, name: 'Order History' },
-  ]);
-
-  const [selectedTag, setSelectedTag] = useState(null);
-  const [generatedPrompt, setGeneratedPrompt] = useState('');
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [draggedTag, setDraggedTag] = useState(null);
-  const [isDragOver, setIsDragOver] = useState(false);
-
-  const dropZoneRef = useRef(null);
-
-  const handleDragStart = (e, tag) => {
-    setDraggedTag(tag);
-    e.dataTransfer.setData('text/plain', '');
-  };
-
-  const handleDragOver = (e) => {
-    e.preventDefault();
-    setIsDragOver(true);
-  };
-
-  const handleDragLeave = (e) => {
-    if (!dropZoneRef.current?.contains(e.relatedTarget)) {
-      setIsDragOver(false);
-    }
-  };
-
-  const handleDrop = (e) => {
-    e.preventDefault();
-    setIsDragOver(false);
-    
-    if (draggedTag) {
-      generatePrompt(draggedTag);
-      setDraggedTag(null);
-    }
-  };
-
-  const generatePrompt = async (tag) => {
-    setIsGenerating(true);
-    setGeneratedPrompt('');
-    setSelectedTag(tag);
-    
-    try {
-      const prompt = await generatePromptForFeature(tag.name, dummyProjectContext);
-      setGeneratedPrompt(prompt);
-    } catch (error) {
-      console.error("Failed to generate prompt:", error);
-      setGeneratedPrompt('Error generating prompt. Check API key or network.');
-    } finally {
-      setIsGenerating(false);
-    }
-  };
-  
-  const handleReset = () => {
-    setSelectedTag(null);
-    setGeneratedPrompt('');
-  };
-
-  const handleCtaClick = () => {
-    window.dispatchEvent(new CustomEvent('navigate-to-auth'));
-  };
+  const [selectedPrompt, setSelectedPrompt] = useState(null);
 
   return (
-    <div className="relative bg-white p-4 rounded-2xl border border-slate-200/60 w-full max-w-xl mx-auto my-4 shadow-lg flex flex-col">
-      <DragAndDropAnimation />
-      <div className="flex-grow">
-        <div className="text-center mb-4">
-            <h2 className="text-lg font-medium text-slate-700">Available E-commerce Features</h2>
-            <p className="text-sm text-slate-500">Drag a feature to generate a live prompt</p>
-        </div>
-        
-        <div className="flex flex-wrap gap-2 justify-center mb-5">
-          {availableTags.map((tag) => (
-            <motion.div
-              key={tag.id}
-              draggable
-              onDragStart={(e) => handleDragStart(e, tag)}
-              whileHover={{ scale: 1.05, backgroundColor: '#1e293b', color: '#ffffff' }}
-              className="px-3 py-1 text-xs rounded-full cursor-grab bg-white border border-slate-300 text-slate-700 transition-colors"
-            >
-              {tag.name}
-            </motion.div>
-          ))}
-        </div>
-
-        <motion.div
-          ref={dropZoneRef}
-          onDragOver={handleDragOver}
-          onDragLeave={handleDragLeave}
-          onDrop={handleDrop}
-          className={`border-2 border-dashed rounded-xl p-6 transition-all ${
-            isDragOver ? 'border-slate-400 scale-[1.01]' : 'border-slate-200'
-          }`}
-          style={{ minHeight: '220px' }}
-        >
-          {!selectedTag && !isGenerating ? (
-            <div className="text-center flex flex-col justify-center items-center h-full">
-              <Zap className="w-8 h-8 text-slate-300 mb-3" />
-              <h3 className="text-base font-medium text-slate-600">
-                Drop a feature here
-              </h3>
-              <p className="text-slate-400 text-sm">
-                Generate a custom prompt.
-              </p>
+    <>
+      <div className="w-full max-w-6xl mx-auto my-12 grid grid-cols-1 md:grid-cols-2 gap-6">
+        {promptTemplates.map((template, index) => (
+          <motion.div
+            key={template.id}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: index * 0.1 }}
+            className="relative group bg-white rounded-xl border border-slate-200/70 p-6 flex flex-col h-full cursor-pointer"
+            onClick={() => setSelectedPrompt(template)}
+          >
+            <h3 className="text-lg font-semibold text-slate-800 mb-4">
+              {template.title}
+            </h3>
+            <p className="text-slate-600 flex-grow">
+              {template.description}
+            </p>
+            <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 rounded-xl">
+              <button
+                className="text-white text-lg font-semibold py-2 px-4 rounded-lg bg-slate-800 bg-opacity-80"
+              >
+                View Prompt
+              </button>
             </div>
-          ) : isGenerating ? (
-            <div className="text-center flex flex-col justify-center items-center h-full">
-              <motion.div
-                animate={{ rotate: 360 }}
-                transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }}
-                className="w-10 h-10 border-2 border-slate-800 border-t-transparent rounded-full mx-auto mb-4"
-              />
-              <h3 className="text-base font-medium text-slate-700">
-                Generating for {selectedTag?.name}
-              </h3>
-            </div>
-          ) : (
-            <div className="space-y-3 h-full flex flex-col">
-              <div className="flex items-center justify-between">
-                <h3 className="text-sm font-medium text-slate-800">
-                  Generated Prompt for {selectedTag?.name}
-                </h3>
-                <button
-                  onClick={() => navigator.clipboard.writeText(generatedPrompt)}
-                  className="p-1.5 rounded-md hover:bg-slate-200 transition-colors"
-                >
-                  <Copy className="w-4 h-4 text-slate-500" />
-                </button>
-              </div>
-              
-              <div className="bg-slate-50/70 rounded-md border border-slate-200/80 p-3 text-xs text-slate-600 whitespace-pre-wrap overflow-y-auto flex-grow">
-                  {generatedPrompt}
-              </div>
-              <button onClick={handleReset} className="text-xs text-slate-500 hover:underline w-full text-center mt-1">Reset</button>
-            </div>
-          )}
-        </motion.div>
+          </motion.div>
+        ))}
       </div>
-      <div className="mt-4 text-center">
-        <motion.button
-          onClick={handleCtaClick}
-          whileHover={{ scale: 1.02 }}
-          className="w-full bg-black hover:bg-slate-800 text-white font-medium py-3 px-4 rounded-lg text-base transition-colors"
-        >
-          Create Your Project Prompts
-        </motion.button>
-      </div>
-    </div>
+      {selectedPrompt && (
+        <PromptModal
+          template={selectedPrompt}
+          onClose={() => setSelectedPrompt(null)}
+        />
+      )}
+    </>
   );
 };
 
