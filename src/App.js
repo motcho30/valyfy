@@ -9,6 +9,7 @@ import ProjectDetail from './components/ProjectDetail';
 import Auth from './components/Auth';
 import DatabaseSetup from './components/DatabaseSetup';
 import CursorTips from './components/CursorTips';
+import DesignInspiration from './components/DesignInspiration';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import FilesGuidance from './components/FilesGuidance';
 import './index.css';
@@ -541,9 +542,9 @@ function AppContent() {
     );
   }
 
-  // The landing page ('home') is public.
+  // The landing page ('home') and design inspiration are public.
   // For all other views, we check for authentication.
-  if (currentView !== 'home' && !isAuthenticated) {
+  if (currentView !== 'home' && currentView !== 'design-inspiration' && !isAuthenticated) {
     return <Auth />;
   }
 
@@ -552,7 +553,11 @@ function AppContent() {
       case 'home':
         return (
           <div className="min-h-screen bg-white">
-            <Header onNavigateToDashboard={() => setCurrentView('dashboard')} />
+            <Header 
+              onNavigateToDashboard={() => setCurrentView('dashboard')}
+              onNavigateToDesignInspiration={() => setCurrentView('design-inspiration')}
+              onNavigateToHome={() => setCurrentView('home')}
+            />
             <main className="max-w-6xl mx-auto px-6 py-12 pt-24">
               <Hero onNavigateToFeature={handleNavigateToFeature} />
             </main>
@@ -619,6 +624,18 @@ function AppContent() {
 
       case 'cursor-tips':
         return <CursorTips />;
+
+      case 'design-inspiration':
+        return (
+          <div className="min-h-screen bg-white">
+            <Header 
+              onNavigateToDashboard={() => setCurrentView('dashboard')}
+              onNavigateToDesignInspiration={() => setCurrentView('design-inspiration')}
+              onNavigateToHome={() => setCurrentView('home')}
+            />
+            <DesignInspiration onNavigateToFeature={handleNavigateToFeature} />
+          </div>
+        );
 
       default:
         return <div>Not Found</div>;

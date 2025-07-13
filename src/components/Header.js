@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { motion, useScroll, useTransform, AnimatePresence } from 'framer-motion';
 
-const Header = ({ onNavigateToDashboard }) => {
+const Header = ({ onNavigateToDashboard, onNavigateToDesignInspiration, onNavigateToHome }) => {
   const { scrollY: motionScrollY } = useScroll();
   
   // Transform scroll position to opacity (fade out when scrolling down)
@@ -18,7 +18,12 @@ const Header = ({ onNavigateToDashboard }) => {
     >
       <div className="flex items-center justify-center">
         <div className="bg-gray-100/80 backdrop-blur-sm rounded-full px-6 py-3 flex items-center space-x-8 shadow-sm border border-white/20">
-          <h1 className="text-xl font-bold text-black">Valyfy</h1>
+          <button 
+            onClick={() => onNavigateToHome && onNavigateToHome()}
+            className="text-xl font-bold text-black hover:text-gray-700 transition-colors duration-200"
+          >
+            Valyfy
+          </button>
           <nav className="flex space-x-6">
             <div className="relative">
               <button 
@@ -28,6 +33,12 @@ const Header = ({ onNavigateToDashboard }) => {
               </button>
 
             </div>
+            <button 
+              onClick={() => onNavigateToDesignInspiration && onNavigateToDesignInspiration()}
+              className="text-gray-700 hover:text-black transition-colors duration-200"
+            >
+              Design Inspiration
+            </button>
             <a href="#about" className="text-gray-700 hover:text-black transition-colors duration-200">
               About valyfy
             </a>
