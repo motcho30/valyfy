@@ -3,7 +3,6 @@ import { motion } from 'framer-motion';
 import { Plus, Folder, Calendar, ArrowRight, User, LogOut } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import DebugInfo from './DebugInfo';
-import TestSupabaseButton from './TestSupabaseButton';
 
 const Dashboard = ({ projects = [], loading = false, onNavigateToFeature, onNavigateToProject, onSetupDatabase }) => {
   const [currentTime, setCurrentTime] = useState('');
