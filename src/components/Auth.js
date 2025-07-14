@@ -2,10 +2,12 @@ import React, { useState } from 'react'
 import { motion } from 'framer-motion'
 import { Eye, EyeOff, Mail, Lock, User, ArrowRight } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
+import { supabase } from '../services/supabase'
 
 const Auth = ({ onClose }) => {
   const [isSignUp, setIsSignUp] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
+  const [connectionTest, setConnectionTest] = useState(null)
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -15,27 +17,84 @@ const Auth = ({ onClose }) => {
   
   const { signUp, signIn, loading, error } = useAuth()
 
+  // Test Supabase connection
+  const testConnection = async () => {
+    console.log('🧪 Testing Supabase connection...')
+    try {
+      // Check environment variables
+      const url = process.env.REACT_APP_SUPABASE_URL
+      const key = process.env.REACT_APP_SUPABASE_ANON_KEY
+      
+      console.log('🔗 Supabase URL:', url ? '✅ Set' : '❌ Missing')
+      console.log('🔑 Supabase Key:', key ? '✅ Set' : '❌ Missing')
+      
+      if (!url || !key) {
+        setConnectionTest('❌ Environment variables missing')
+        return
+      }
+      
+      // Test simple query
+      const { data, error } = await supabase.auth.getSession()
+      console.log('📊 Session test:', { data, error })
+      
+      if (error) {
+        setConnectionTest(`❌ Connection error: ${error.message}`)
+      } else {
+        setConnectionTest('✅ Supabase connected successfully')
+      }
+    } catch (err) {
+      console.error('💥 Connection test failed:', err)
+      setConnectionTest(`❌ Test failed: ${err.message}`)
+    }
+  }
+
   const handleSubmit = async (e) => {
     e.preventDefault()
     
+    console.log('🔍 Auth form submitted:', { isSignUp, formData })
+    
     try {
       if (isSignUp) {
-        const { error } = await signUp(formData.email, formData.password, {
+        console.log('📝 Attempting signup with:', formData.email)
+        const { data, error } = await signUp(formData.email, formData.password, {
           full_name: formData.fullName,
           username: formData.username
         })
+        console.log('📊 Signup result:', { data, error })
+        
         if (!error) {
-          // Success - user will be automatically logged in
-          onClose && onClose()
+          console.log('✅ Signup successful!')
+          
+          // Check if user is immediately logged in (no email verification)
+          if (data.session) {
+            console.log('🎉 User logged in immediately')
+            onClose && onClose()
+          } else if (data.user && !data.session) {
+            // Email verification required - show success message but don't close
+            console.log('📧 Email verification required')
+            setConnectionTest('✅ Account created! You can now sign in without email verification.')
+            // Auto-switch to sign in mode
+            setTimeout(() => {
+              setIsSignUp(false)
+              setFormData(prev => ({ ...prev, fullName: '', username: '' }))
+            }, 2000)
+          }
+        } else {
+          console.error('❌ Signup error:', error)
         }
       } else {
-        const { error } = await signIn(formData.email, formData.password)
+        console.log('🔑 Attempting signin with:', formData.email)
+        const { data, error } = await signIn(formData.email, formData.password)
+        console.log('📊 Signin result:', { data, error })
         if (!error) {
+          console.log('✅ Signin successful!')
           onClose && onClose()
+        } else {
+          console.error('❌ Signin error:', error)
         }
       }
     } catch (err) {
-      console.error('Auth error:', err)
+      console.error('💥 Auth exception:', err)
     }
   }
 
@@ -159,6 +218,27 @@ const Auth = ({ onClose }) => {
                 <p className="text-red-600 text-sm">{error}</p>
               </div>
             )}
+
+            {/* Debug: Connection Test */}
+            <div className="space-y-3">
+              <button
+                type="button"
+                onClick={testConnection}
+                className="w-full py-2 px-4 border border-blue-200 text-blue-600 rounded-xl text-sm hover:bg-blue-50 transition-colors"
+              >
+                🧪 Test Supabase Connection
+              </button>
+              
+              {connectionTest && (
+                <div className={`p-3 rounded-xl text-sm ${
+                  connectionTest.includes('✅') 
+                    ? 'bg-green-50 border border-green-200 text-green-700'
+                    : 'bg-red-50 border border-red-200 text-red-600'
+                }`}>
+                  {connectionTest}
+                </div>
+              )}
+            </div>
 
             <div className="space-y-4">
               <motion.button

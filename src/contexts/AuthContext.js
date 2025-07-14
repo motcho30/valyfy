@@ -58,10 +58,14 @@ export const AuthProvider = ({ children }) => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (!mounted) return
       
+      console.log('🔄 Auth state change:', { event, hasSession: !!session, userId: session?.user?.id })
+      
       setUser(session?.user ?? null)
       if (session?.user) {
+        console.log('✅ User authenticated:', session.user.email)
         setProfile({ full_name: '', username: '' })
       } else {
+        console.log('❌ User not authenticated')
         setProfile(null)
       }
     })
@@ -74,16 +78,27 @@ export const AuthProvider = ({ children }) => {
   }, [])
 
   const signUp = async (email, password, metadata = {}) => {
+    console.log('🚀 AuthContext signUp called with:', { email, metadata })
     try {
       setError(null)
+      console.log('📡 Calling Supabase auth.signUp...')
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
-        options: { data: metadata }
+        options: { 
+          data: metadata,
+          emailRedirectTo: null // Disable email verification
+        }
       })
-      if (error) throw error
+      console.log('📊 Supabase signUp response:', { data, error })
+      if (error) {
+        console.error('❌ Supabase signUp error:', error)
+        throw error
+      }
+      console.log('✅ signUp successful, returning data')
       return { data, error: null }
     } catch (error) {
+      console.error('💥 signUp exception:', error)
       setError(error.message)
       return { data: null, error }
     }
