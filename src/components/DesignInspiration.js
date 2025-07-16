@@ -6,7 +6,7 @@ import Auth from './Auth';
 const DesignInspiration = ({ onNavigateToFeature }) => {
   const [selectedCard, setSelectedCard] = useState(null);
   const [showAuthModal, setShowAuthModal] = useState(false);
-  const { user, isAuthenticated } = useAuth();
+  const { isAuthenticated } = useAuth();
 
   // Function to copy prompt after successful authentication
   const copyPromptAfterAuth = async (prompt) => {
@@ -1771,26 +1771,35 @@ transition: border-color 150ms
 }
 
 /* Group Hover Pattern */
-.group:hover .group-hover\:text-sky-50 {
+.group:hover .group-hover:text-sky-50 {
   color: #f0f9ff
 }
 
 /* Scale Animations */
-transform: scale(1)
-transition: transform 150ms
+.scale-animation {
+  transform: scale(1);
+  transition: transform 150ms;
+}
 
-&:hover {
-  transform: scale(1.005)
+.scale-animation:hover {
+  transform: scale(1.005);
 }
 
 /* Pointer Events Control */
-pointer-events: none /* For non-interactive decorative elements */
-Performance Optimizations:
-css/* Will-change for scroll animations */
-will-change: transform
+.pointer-events-none {
+  pointer-events: none; /* For non-interactive decorative elements */
+}
+
+/* Performance Optimizations */
+/* Will-change for scroll animations */
+.will-change-transform {
+  will-change: transform;
+}
 
 /* Contain paint for performance */
-contain: paint
+.contain-paint {
+  contain: paint;
+}
 
 /* Select-none for non-selectable UI */
 user-select: none
