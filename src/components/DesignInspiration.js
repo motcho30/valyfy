@@ -1,8 +1,23 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useAuth } from '../contexts/AuthContext';
+import Auth from './Auth';
 
 const DesignInspiration = ({ onNavigateToFeature }) => {
   const [selectedCard, setSelectedCard] = useState(null);
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const { user, isAuthenticated } = useAuth();
+
+  // Function to copy prompt after successful authentication
+  const copyPromptAfterAuth = async (prompt) => {
+    try {
+      await navigator.clipboard.writeText(prompt);
+      console.log('Prompt copied successfully after authentication!');
+      // You could add a toast notification here if you have one
+    } catch (err) {
+      console.error('Failed to copy prompt after authentication: ', err);
+    }
+  };
   
   const prefixText = `Transform my current website design, CSS styling and overall frontend into the following strict and descriptive design and frontend specification document. Make sure to not change any copy, context or functionality we currently have in the website, this is solely a design UI/UX and frontend redesign.
 
@@ -3622,6 +3637,12 @@ Critical CSS inlined for above-the-fold content`
     const [copied, setCopied] = useState(false);
 
     const copyPrompt = async () => {
+      // Check if user is authenticated
+      if (!isAuthenticated) {
+        setShowAuthModal(true);
+        return;
+      }
+
       try {
         await navigator.clipboard.writeText(card.prompt);
         setCopied(true);
@@ -3664,7 +3685,12 @@ Critical CSS inlined for above-the-fold content`
                   className="w-full h-full object-contain"
                 />
               </div>
-              <h2 className="text-2xl font-semibold text-gray-900">{card.company}</h2>
+              <div>
+                <h2 className="text-2xl font-semibold text-gray-900">{card.company}</h2>
+                {!isAuthenticated && (
+                  <p className="text-sm text-gray-500">Sign up required to copy prompt</p>
+                )}
+              </div>
             </div>
             
             <div className="flex items-center gap-3">
@@ -3675,10 +3701,12 @@ Critical CSS inlined for above-the-fold content`
                 className={`px-4 py-2 rounded-lg font-medium transition-all duration-200 ${
                   copied 
                     ? 'bg-green-100 text-green-700' 
-                    : 'bg-gray-900 text-white hover:bg-gray-800'
+                    : isAuthenticated
+                    ? 'bg-gray-900 text-white hover:bg-gray-800'
+                    : 'bg-vibe-cyan text-black hover:bg-vibe-cyan/90'
                 }`}
               >
-                {copied ? '✓ Copied!' : 'Copy Prompt'}
+                {copied ? '✓ Copied!' : isAuthenticated ? 'Copy Prompt' : 'Sign up to copy'}
               </motion.button>
               
               <button
@@ -3790,7 +3818,7 @@ Critical CSS inlined for above-the-fold content`
                     <h3 className="text-2xl font-semibold text-gray-900 text-center mb-8">How to use this design prompt</h3>
                     <div className="space-y-4">
                       {[
-                        "Copy the design prompt using the button above",
+                        isAuthenticated ? "Copy the design prompt using the button above" : "Sign up/Sign in to copy the design prompt",
                         "Open Cursor and ensure mode is set to Agent",
                         "Select Claude 4 Sonnet as your model", 
                         "Paste the prompt and add your specific requirements",
@@ -3907,7 +3935,7 @@ Critical CSS inlined for above-the-fold content`
                   {/* CTA Button */}
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-medium text-gray-500 group-hover:text-gray-700 transition-colors duration-300">
-                      Copy design prompt
+                      {isAuthenticated ? 'Copy design prompt' : 'Sign up to copy prompt'}
                     </span>
                     <motion.div
                       whileHover={{ scale: 1.1 }}
@@ -3974,6 +4002,37 @@ Critical CSS inlined for above-the-fold content`
             card={selectedCard}
             onClose={() => setSelectedCard(null)}
           />
+        )}
+      </AnimatePresence>
+
+      {/* Authentication Modal */}
+      <AnimatePresence>
+        {showAuthModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50"
+            onClick={() => setShowAuthModal(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-white rounded-2xl w-full max-w-md overflow-hidden"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <Auth onClose={() => {
+                setShowAuthModal(false);
+                // Small delay to ensure auth state is updated, then copy prompt
+                setTimeout(() => {
+                  if (selectedCard) {
+                    copyPromptAfterAuth(selectedCard.prompt);
+                  }
+                }, 100);
+              }} />
+            </motion.div>
+          </motion.div>
         )}
       </AnimatePresence>
     </div>
