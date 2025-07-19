@@ -1,12 +1,16 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../contexts/AuthContext';
+import { usePayment } from '../contexts/PaymentContext';
 import Auth from './Auth';
+import PaymentModal from './PaymentModal';
 
 const DesignInspiration = ({ onNavigateToFeature }) => {
   const [selectedCard, setSelectedCard] = useState(null);
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
   const { isAuthenticated } = useAuth();
+  const { hasAccess, isLoading: paymentLoading, isPaymentRequired, debugCheckPayment } = usePayment();
 
   // Function to copy prompt after successful authentication
   const copyPromptAfterAuth = async (prompt) => {
@@ -3649,9 +3653,18 @@ Critical CSS inlined for above-the-fold content`
       // Check if user is authenticated
       if (!isAuthenticated) {
         setShowAuthModal(true);
+        setSelectedCard(card);
         return;
       }
 
+      // Check if user has paid for access
+      if (isPaymentRequired) {
+        setShowPaymentModal(true);
+        setSelectedCard(card);
+        return;
+      }
+
+      // User is authenticated and has access - copy the prompt
       try {
         await navigator.clipboard.writeText(card.prompt);
         setCopied(true);
@@ -3696,9 +3709,13 @@ Critical CSS inlined for above-the-fold content`
               </div>
               <div>
                 <h2 className="text-2xl font-semibold text-gray-900">{card.company}</h2>
-                {!isAuthenticated && (
+                {!isAuthenticated ? (
                   <p className="text-sm text-gray-500">Sign up required to copy prompt</p>
-                )}
+                ) : isPaymentRequired ? (
+                  <p className="text-sm text-gray-500">Payment required to copy prompts</p>
+                ) : hasAccess ? (
+                  <p className="text-sm text-green-600">✓ All prompts unlocked</p>
+                ) : null}
               </div>
             </div>
             
@@ -3710,12 +3727,14 @@ Critical CSS inlined for above-the-fold content`
                 className={`px-4 py-2 rounded-lg font-medium transition-all duration-200 ${
                   copied 
                     ? 'bg-green-100 text-green-700' 
-                    : isAuthenticated
+                    : hasAccess
                     ? 'bg-gray-900 text-white hover:bg-gray-800'
+                    : isPaymentRequired
+                    ? 'bg-blue-600 text-white hover:bg-blue-700'
                     : 'bg-vibe-cyan text-black hover:bg-vibe-cyan/90'
                 }`}
               >
-                {copied ? '✓ Copied!' : isAuthenticated ? 'Copy Prompt' : 'Sign up to copy'}
+                {copied ? '✓ Copied!' : hasAccess ? 'Copy Prompt' : isPaymentRequired ? 'Pay £5 to Copy' : 'Sign up to copy'}
               </motion.button>
               
               <button
@@ -3886,6 +3905,24 @@ Critical CSS inlined for above-the-fold content`
             Stop wasting time screenshotting websites and telling Cursor to make your design like it. 
             Ready-made design prompts to copy and paste in your Cursor chat.
           </motion.p>
+          
+          {/* Debug helper - remove in production */}
+          {process.env.NODE_ENV === 'development' && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.8, delay: 0.6 }}
+              className="mt-6"
+            >
+              <button
+                onClick={debugCheckPayment}
+                className="px-4 py-2 text-sm bg-gray-200 text-gray-600 rounded-lg hover:bg-gray-300 transition-colors"
+                title="Debug: Check payment status"
+              >
+                🐛 Debug: Check Payment Status
+              </button>
+            </motion.div>
+          )}
         </div>
       </motion.section>
 
@@ -4044,6 +4081,16 @@ Critical CSS inlined for above-the-fold content`
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Payment Modal */}
+      <PaymentModal 
+        isOpen={showPaymentModal}
+        onClose={() => setShowPaymentModal(false)}
+        onPaymentInitiated={() => {
+          setShowPaymentModal(false);
+          // Payment service will handle the redirect to Stripe
+        }}
+      />
     </div>
   );
 };

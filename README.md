@@ -1,6 +1,6 @@
 # Valyfy Landing Page
 
-A modern, minimalistic landing page for Valyfy - your vibe coding productivity app.
+A modern, minimalistic landing page for Valyfy - your vibe coding productivity app with integrated Stripe payment processing for Design Inspiration access.
 
 ## 🎨 Design Features
 
@@ -61,11 +61,87 @@ npm run build
 
 This builds the app for production to the `build` folder.
 
+## 💳 Stripe Payment Integration
+
+The Design Inspiration feature includes integrated payment processing allowing users to pay £5 for unlimited access to copy design prompts.
+
+### Features
+- **Secure Payment Processing** via Stripe Checkout
+- **One-time Payment** of £5 (GBP)
+- **Webhook Integration** for reliable payment confirmation
+- **User Payment Tracking** via Supabase database
+- **Real-time Payment Status** updates
+
+### Setup Instructions
+
+**⚠️ Important**: Payment setup requires additional configuration. See [`STRIPE_SETUP.md`](./STRIPE_SETUP.md) for complete setup instructions.
+
+### Quick Test
+
+1. **Test Card Numbers** (use in development):
+   - Success: `4242 4242 4242 4242`
+   - Requires 3D Secure: `4000 0027 6000 3184` 
+   - Declined: `4000 0000 0000 0002`
+
+2. **Test Flow**:
+   - Go to Design Inspiration page
+   - Click "Copy Prompt" on any card
+   - Complete authentication if needed
+   - Click "Pay £5 to Copy" 
+   - Use test card details above
+   - Verify payment success and prompt copying works
+
+### Files Added
+- `supabase/functions/create-checkout-session/` - Payment session creation
+- `supabase/functions/stripe-webhook/` - Webhook handling
+- `src/services/paymentService.js` - Payment service layer
+- `src/contexts/PaymentContext.js` - Payment state management
+- `src/components/PaymentModal.js` - Payment UI component
+- `supabase-payments-schema.sql` - Database schema
+- `STRIPE_SETUP.md` - Complete setup documentation
+
 ## 🎨 Customization
 
 - Colors can be modified in `tailwind.config.js`
 - Components are located in `src/components/`
 - Animations can be adjusted in individual component files
+
+## 🚀 Production Deployment
+
+### **Switch to Live Stripe Mode:**
+
+1. **Get Live Stripe Keys** (https://dashboard.stripe.com/):
+   - Toggle to "Live mode" (top right)
+   - Copy **Publishable key**: `pk_live_...`
+   - Copy **Secret key**: `sk_live_...`
+
+2. **Create Live Webhook Endpoint**:
+   - Go to Webhooks in Live mode
+   - Add endpoint: `https://kjwwfmmciwsamjjfcwio.supabase.co/functions/v1/stripe-webhook`
+   - Select events: `checkout.session.completed`, `checkout.session.async_payment_succeeded`, `checkout.session.async_payment_failed`
+   - Copy **Webhook signing secret**: `whsec_...`
+
+3. **Update Environment Variables**:
+   ```bash
+   # Frontend (.env)
+   REACT_APP_STRIPE_PUBLISHABLE_KEY=pk_live_your_actual_key
+   
+   # Supabase Edge Functions (Dashboard > Functions > Settings)
+   STRIPE_SECRET_KEY=sk_live_your_actual_key
+   STRIPE_WEBHOOK_SIGNING_SECRET=whsec_your_actual_webhook_secret
+   ```
+
+4. **Test with Small Amount**: Make a £1 test payment first!
+
+### **Deploy Commands:**
+```bash
+# Deploy updated Edge Functions
+supabase functions deploy create-checkout-session --no-verify-jwt
+supabase functions deploy stripe-webhook --no-verify-jwt
+
+# Deploy frontend to your hosting platform
+npm run build
+```
 
 ---
 

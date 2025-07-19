@@ -11,13 +11,13 @@ import DatabaseSetup from './components/DatabaseSetup';
 import CursorTips from './components/CursorTips';
 import DesignInspiration from './components/DesignInspiration';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { PaymentProvider } from './contexts/PaymentContext';
 import FilesGuidance from './components/FilesGuidance';
 import './index.css';
 import { projectService } from './services/projectService';
 import { generateDesignSpecDocument } from './services/designSpecService';
 
-function AppContent() {
-  const [currentView, setCurrentView] = useState('home');
+function AppContent({ currentView, setCurrentView }) {
   const [currentProject, setCurrentProject] = useState(null);
   const [projects, setProjects] = useState([]);
   const [loadingProjects, setLoadingProjects] = useState(false);
@@ -650,9 +650,13 @@ function AppContent() {
 }
 
 function App() {
+  const [currentView, setCurrentView] = useState('home');
+  
   return (
     <AuthProvider>
-      <AppContent />
+      <PaymentProvider onNavigate={setCurrentView}>
+        <AppContent currentView={currentView} setCurrentView={setCurrentView} />
+      </PaymentProvider>
     </AuthProvider>
   );
 }
