@@ -1,16 +1,25 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Plus, Folder, Calendar, ArrowRight, User, LogOut } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import DebugInfo from './DebugInfo';
 
-const Dashboard = ({ projects = [], loading = false, onNavigateToFeature, onNavigateToProject, onSetupDatabase }) => {
+const Dashboard = ({ projects = [], loading = false, onNavigateToProject, onSetupDatabase }) => {
   const [currentTime, setCurrentTime] = useState('');
-  const { user, profile, signOut, updateProfile } = useAuth();
+  const navigate = useNavigate();
+  const { user, profile, signOut, updateProfile, isAuthenticated } = useAuth();
   const [editingProfile, setEditingProfile] = useState(false);
   const [profileData, setProfileData] = useState({ full_name: '', username: '' });
 
   const userName = profile?.full_name || user?.email?.split('@')[0] || 'Developer';
+
+  // Redirect to auth if not authenticated
+  useEffect(() => {
+    if (!isAuthenticated) {
+      navigate('/auth');
+    }
+  }, [isAuthenticated, navigate]);
 
   useEffect(() => {
     const updateTime = () => {
@@ -37,6 +46,11 @@ const Dashboard = ({ projects = [], loading = false, onNavigateToFeature, onNavi
     }
   }, [profile]);
 
+  // Don't render anything if not authenticated (after all hooks are called)
+  if (!isAuthenticated) {
+    return null;
+  }
+
   const handleProfileUpdate = async () => {
     try {
       await updateProfile(profileData);
@@ -49,17 +63,22 @@ const Dashboard = ({ projects = [], loading = false, onNavigateToFeature, onNavi
   const handleSignOut = async () => {
     try {
       await signOut();
+      navigate('/'); // Redirect to landing page after sign out
     } catch (error) {
       console.error('Error signing out:', error);
     }
   };
 
   const handleCreateProject = () => {
-    onNavigateToFeature && onNavigateToFeature('create-project');
+    navigate('/create-project');
   };
 
   const handleOpenProject = (project) => {
     onNavigateToProject && onNavigateToProject(project);
+  };
+
+  const handleNavigateHome = () => {
+    navigate('/');
   };
 
   return (
@@ -73,7 +92,12 @@ const Dashboard = ({ projects = [], loading = false, onNavigateToFeature, onNavi
       >
         <div className="flex items-center justify-center">
           <div className="bg-gray-100/80 backdrop-blur-sm rounded-full px-6 py-3 flex items-center space-x-8 shadow-sm border border-white/20">
-            <h1 className="text-xl font-bold text-black">Valyfy</h1>
+            <button 
+              onClick={handleNavigateHome}
+              className="text-xl font-bold text-black hover:text-vibe-cyan transition-colors cursor-pointer"
+            >
+              Valyfy
+            </button>
             <nav className="flex items-center space-x-6">
               <div className="flex items-center space-x-3 px-4 py-2 bg-vibe-cyan/20 rounded-full">
                 <div className="w-8 h-8 bg-vibe-cyan rounded-full flex items-center justify-center">

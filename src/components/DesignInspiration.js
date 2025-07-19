@@ -1,25 +1,82 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { usePayment } from '../contexts/PaymentContext';
 import Auth from './Auth';
 import PaymentModal from './PaymentModal';
+import Header from './Header';
+import { projectService } from '../services/projectService';
 
 const DesignInspiration = ({ onNavigateToFeature }) => {
   const [selectedCard, setSelectedCard] = useState(null);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
-  const { isAuthenticated } = useAuth();
+  const navigate = useNavigate();
+  const { user, isAuthenticated } = useAuth();
   const { hasAccess, isLoading: paymentLoading, isPaymentRequired, debugCheckPayment } = usePayment();
 
+  // Helper function to check if a card is free
+  const isCardFree = (cardId) => {
+    return cardId === 1; // Homerun card (id: 1) is free
+  };
+
+  // Helper function to check if payment is required for a specific card
+  const isPaymentRequiredForCard = (cardId) => {
+    if (isCardFree(cardId)) return false;
+    return isPaymentRequired;
+  };
+
   // Function to copy prompt after successful authentication
-  const copyPromptAfterAuth = async (prompt) => {
+  const copyPromptAfterAuth = async (prompt, card = null) => {
     try {
       await navigator.clipboard.writeText(prompt);
       console.log('Prompt copied successfully after authentication!');
+      
+      // Track the copy activity silently
+      if (card) {
+        await trackPromptCopyActivity(card, 'auth_modal');
+      }
+      
       // You could add a toast notification here if you have one
     } catch (err) {
-      console.error('Failed to copy prompt after authentication: ', err);
+      console.error('Failed to copy prompt after auth: ', err);
+    }
+  };
+
+  // Helper function to track prompt copy activity (silent - no UI feedback on errors)
+  const trackPromptCopyActivity = async (card, source = 'design_inspiration') => {
+    try {
+      console.log('📊 Tracking prompt copy activity for:', card.company || 'Unknown Design');
+      
+      const copyData = {
+        user_id: user?.id || null,
+        design_card_id: card.id,
+        design_card_name: card.company || 'Unknown Design',
+        prompt_content: card.prompt,
+        user_authenticated: isAuthenticated || false,
+        has_payment_access: hasAccess || false,
+        copy_source: source,
+        user_agent: navigator.userAgent,
+        metadata: {
+          card_category: card.category || 'unknown',
+          card_description: card.description || '',
+          timestamp: new Date().toISOString(),
+          browser_language: navigator.language,
+          screen_resolution: typeof window !== 'undefined' && window.screen 
+            ? `${window.screen.width}x${window.screen.height}` 
+            : 'unknown'
+        }
+      };
+
+      // Track in background - don't wait for response and don't show errors to user
+      projectService.trackPromptCopy(copyData).catch(error => {
+        console.warn('Silent tracking failed (this is OK):', error);
+      });
+      
+    } catch (error) {
+      console.warn('Prompt copy tracking failed silently:', error);
+      // Silently fail - don't interrupt user experience
     }
   };
   
@@ -3657,8 +3714,8 @@ Critical CSS inlined for above-the-fold content`
         return;
       }
 
-      // Check if user has paid for access
-      if (isPaymentRequired) {
+      // Check if user has paid for access (unless it's a free card)
+      if (isPaymentRequiredForCard(card.id)) {
         setShowPaymentModal(true);
         setSelectedCard(card);
         return;
@@ -3669,6 +3726,10 @@ Critical CSS inlined for above-the-fold content`
         await navigator.clipboard.writeText(card.prompt);
         setCopied(true);
         setTimeout(() => setCopied(false), 2000);
+        
+        // Track the copy activity silently in the background
+        await trackPromptCopyActivity(card, 'design_modal');
+        
       } catch (err) {
         console.error('Failed to copy: ', err);
       }
@@ -3711,7 +3772,9 @@ Critical CSS inlined for above-the-fold content`
                 <h2 className="text-2xl font-semibold text-gray-900">{card.company}</h2>
                 {!isAuthenticated ? (
                   <p className="text-sm text-gray-500">Sign up required to copy prompt</p>
-                ) : isPaymentRequired ? (
+                ) : isCardFree(card.id) ? (
+                  <p className="text-sm text-green-600">✓ Free prompt</p>
+                ) : isPaymentRequiredForCard(card.id) ? (
                   <p className="text-sm text-gray-500">Payment required to copy prompts</p>
                 ) : hasAccess ? (
                   <p className="text-sm text-green-600">✓ All prompts unlocked</p>
@@ -3727,14 +3790,14 @@ Critical CSS inlined for above-the-fold content`
                 className={`px-4 py-2 rounded-lg font-medium transition-all duration-200 ${
                   copied 
                     ? 'bg-green-100 text-green-700' 
-                    : hasAccess
+                    : hasAccess || isCardFree(card.id)
                     ? 'bg-gray-900 text-white hover:bg-gray-800'
-                    : isPaymentRequired
-                    ? 'bg-blue-600 text-white hover:bg-blue-700'
+                    : isPaymentRequiredForCard(card.id)
+                    ? 'bg-gray-900 text-white hover:bg-gray-800'
                     : 'bg-vibe-cyan text-black hover:bg-vibe-cyan/90'
                 }`}
               >
-                {copied ? '✓ Copied!' : hasAccess ? 'Copy Prompt' : isPaymentRequired ? 'Pay £5 to Copy' : 'Sign up to copy'}
+                {copied ? '✓ Copied!' : hasAccess || isCardFree(card.id) ? 'Copy Prompt' : isPaymentRequiredForCard(card.id) ? 'Copy Prompt' : 'Sign up to copy'}
               </motion.button>
               
               <button
@@ -3872,6 +3935,11 @@ Critical CSS inlined for above-the-fold content`
 
   return (
     <div className="min-h-screen bg-white">
+      <Header 
+        onNavigateToDashboard={() => navigate('/dashboard')}
+        onNavigateToDesignInspiration={() => navigate('/design-inspiration')}
+        onNavigateToHome={() => navigate('/')}
+      />
       {/* Hero Section */}
       <motion.section 
         initial={{ opacity: 0, y: 30 }}
@@ -3946,7 +4014,16 @@ Critical CSS inlined for above-the-fold content`
                 className="group cursor-pointer"
                 onClick={() => setSelectedCard(card)}
               >
-                <div className="bg-white rounded-xl p-6 h-full transition-all duration-300 hover:shadow-lg border border-gray-200 hover:border-gray-300">
+                <div className="bg-white rounded-xl p-6 h-full transition-all duration-300 hover:shadow-lg border border-gray-200 hover:border-gray-300 relative">
+                  {/* Lock Icon for Paid Cards */}
+                  {!isCardFree(card.id) && isPaymentRequiredForCard(card.id) && (
+                    <div className="absolute top-3 right-3 w-6 h-6 bg-gray-100 rounded-full flex items-center justify-center">
+                      <svg className="w-3 h-3 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                      </svg>
+                    </div>
+                  )}
+                  
                   {/* Company Logo and Name */}
                   <div className="flex items-center mb-6">
                     <div className="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center p-2">
@@ -4073,7 +4150,7 @@ Critical CSS inlined for above-the-fold content`
                 // Small delay to ensure auth state is updated, then copy prompt
                 setTimeout(() => {
                   if (selectedCard) {
-                    copyPromptAfterAuth(selectedCard.prompt);
+                    copyPromptAfterAuth(selectedCard.prompt, selectedCard);
                   }
                 }, 100);
               }} />

@@ -52,6 +52,15 @@ const Hero = ({ onNavigateToFeature }) => {
               <span className="absolute -top-2 -right-2 text-xl">✨</span>
             </motion.button>
             
+            <motion.button
+              whileHover={{ scale: 1.05, rotate: -1 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => onNavigateToFeature && onNavigateToFeature('design-inspiration')}
+              className="bg-white border-2 border-black text-black px-12 py-4 rounded-xl font-semibold text-lg hover:shadow-lg hover:bg-gray-50 transition-all duration-200 relative"
+            >
+              Design inspiration
+              <span className="absolute -top-2 -right-2 text-xl">🎨</span>
+            </motion.button>
   
           </motion.div>
         </div>

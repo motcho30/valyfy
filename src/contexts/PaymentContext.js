@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from './AuthContext';
 import paymentService from '../services/paymentService';
 
@@ -12,10 +13,11 @@ export const usePayment = () => {
   return context;
 };
 
-export const PaymentProvider = ({ children, onNavigate }) => {
+export const PaymentProvider = ({ children }) => {
   const [hasAccess, setHasAccess] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [paymentStatus, setPaymentStatus] = useState(null);
+  const navigate = useNavigate();
   const { isAuthenticated, user } = useAuth();
 
   // Check payment status when user authentication changes
@@ -118,9 +120,9 @@ export const PaymentProvider = ({ children, onNavigate }) => {
     }
 
     // Navigate to the specified page if provided
-    if (redirectTo && onNavigate) {
+    if (redirectTo) {
       // Navigate immediately, don't wait
-      onNavigate(redirectTo);
+      navigate(redirectTo);
     }
 
     // Clean up URL parameters from both search and hash

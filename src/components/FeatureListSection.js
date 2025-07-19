@@ -10,6 +10,11 @@ const FeatureListSection = () => {
 
   const features = [
     {
+      title: "AI Co-Founder Mode",
+      description: "Just tell us what you wanna build and we'll turn your scattered thoughts into a clear plan that AI actually understands. Optimized for optimized for cursor, lovable, and whatever comes next.",
+      demo: <PRDStarter onAuthRequired={() => setShowAuth(true)} />,
+    },
+    {
       title: "Copy-Paste Prompts That Actually Work",
       description: "Pixel-perfect UI generation, backend setup, and debugging helpers that catch real issues.",
       demo: <EcommercePromptDemo />,
@@ -18,11 +23,6 @@ const FeatureListSection = () => {
       title: "Instant Project Foundation",
       description: "Generate custom cursor.config rules, PRDs, and design specs tailored to your exact stack. Skip the boring setup, and jump straight to building.",
       demo: <ProjectStarterKit />,
-    },
-    {
-      title: "AI Co-Founder Mode",
-      description: "Get PM-style feedback, feature breakdowns, and roadmaps that turn your wild ideas into solid plans.",
-      demo: <PRDStarter onAuthRequired={() => setShowAuth(true)} />,
     },
   ];
 
@@ -37,13 +37,16 @@ const FeatureListSection = () => {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, amount: 0.3 }}
               transition={{ duration: 0.7 }}
-              className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center"
+              className="flex flex-col space-y-12"
             >
-              <div className={`lg:order-${index % 2 === 1 ? 2 : 1}`}>
+              {/* Text Section - Always on Top */}
+              <div className="text-center max-w-4xl mx-auto">
                 <h2 className="text-4xl font-bold text-gray-900 mb-5">{feature.title}</h2>
                 <p className="text-xl text-gray-600 leading-relaxed">{feature.description}</p>
               </div>
-              <div className={`lg:order-${index % 2 === 1 ? 1 : 2}`}>
+              
+              {/* Component Section - Always Below */}
+              <div className="w-full max-w-5xl mx-auto">
                 {feature.demo}
               </div>
             </motion.div>

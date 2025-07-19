@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Lightbulb, Code, Bug, GitBranch, Zap, Heart } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import Header from './Header';
 
 const tips = [
   {
@@ -69,6 +71,7 @@ const categories = {
 
 const CursorTips = () => {
   const [activeCategory, setActiveCategory] = useState('all');
+  const navigate = useNavigate();
 
   const filteredTips = activeCategory === 'all' 
     ? tips 
@@ -76,12 +79,17 @@ const CursorTips = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-white">
-      {/* Header */}
+      <Header 
+        onNavigateToDashboard={() => navigate('/dashboard')}
+        onNavigateToDesignInspiration={() => navigate('/design-inspiration')}
+        onNavigateToHome={() => navigate('/')}
+      />
+      {/* Hero Section */}
       <motion.section 
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8 }}
-        className="text-center py-20 px-4"
+        className="text-center py-20 pt-32 px-4"
       >
         <h1 className="font-bold text-4xl md:text-5xl lg:text-6xl text-black leading-tight max-w-4xl mx-auto mb-6 tracking-tight">
           Cursor AI Tips & Tricks

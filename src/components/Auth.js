@@ -1,10 +1,12 @@
 import React, { useState } from 'react'
 import { motion } from 'framer-motion'
 import { Eye, EyeOff, Mail, Lock, User, ArrowRight } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../services/supabase'
 
 const Auth = ({ onClose }) => {
+  const navigate = useNavigate()
   const [isSignUp, setIsSignUp] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [formData, setFormData] = useState({
@@ -36,7 +38,7 @@ const Auth = ({ onClose }) => {
           // Check if user is immediately logged in (no email verification)
           if (data.session) {
             console.log('🎉 User logged in immediately')
-            onClose && onClose()
+            onClose ? onClose() : navigate('/dashboard')
           } else if (data.user && !data.session) {
             // Email verification required - show success message but don't close
             console.log('📧 Email verification required')
@@ -55,7 +57,7 @@ const Auth = ({ onClose }) => {
         console.log('📊 Signin result:', { data, error })
         if (!error) {
           console.log('✅ Signin successful!')
-          onClose && onClose()
+          onClose ? onClose() : navigate('/dashboard')
         } else {
           console.error('❌ Signin error:', error)
         }

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import Header from './components/Header';
-import Hero from './components/Hero';
+import { BrowserRouter as Router, Routes, Route, useNavigate, useParams } from 'react-router-dom';
+import HomePage from './components/HomePage';
 import PRDGenerator from './components/PRDGenerator';
 import FeatureExtractor from './components/FeatureExtractor';
 import Dashboard from './components/Dashboard';
@@ -17,12 +17,13 @@ import './index.css';
 import { projectService } from './services/projectService';
 import { generateDesignSpecDocument } from './services/designSpecService';
 
-function AppContent({ currentView, setCurrentView }) {
+function AppContent() {
   const [currentProject, setCurrentProject] = useState(null);
   const [projects, setProjects] = useState([]);
   const [loadingProjects, setLoadingProjects] = useState(false);
   const [showDatabaseSetup, setShowDatabaseSetup] = useState(false);
   const [showGuidanceOnProjectLoad, setShowGuidanceOnProjectLoad] = useState(false);
+  const navigate = useNavigate();
   const { user, isAuthenticated, loading } = useAuth();
 
   // Load projects from Supabase and localStorage with timeout
@@ -134,10 +135,10 @@ function AppContent({ currentView, setCurrentView }) {
   }, [isAuthenticated, user]);
 
   useEffect(() => {
-    const handleNavigateGuidance = () => setCurrentView('files-guidance');
+    const handleNavigateGuidance = () => navigate('/files-guidance');
     window.addEventListener('navigate-files-guidance', handleNavigateGuidance);
 
-    const handleNavigateAuth = () => setCurrentView('auth');
+    const handleNavigateAuth = () => navigate('/auth');
     window.addEventListener('navigate-to-auth', handleNavigateAuth);
 
     return () => {
@@ -148,12 +149,12 @@ function AppContent({ currentView, setCurrentView }) {
 
   const handleNavigateToFeature = (feature, project = null) => {
     setCurrentProject(project);
-    setCurrentView(feature);
+    navigate(`/${feature}`);
   };
 
   const handleNavigateToProject = (project) => {
     setCurrentProject(project);
-    setCurrentView('project-detail');
+    navigate('/project-detail');
   };
 
   const handleProjectCreated = async (projectData, showGuidance = false) => {
@@ -180,7 +181,7 @@ function AppContent({ currentView, setCurrentView }) {
         setProjects(updatedProjects);
         setCurrentProject(newProject);
         setShowGuidanceOnProjectLoad(showGuidance);
-        setCurrentView('project-detail');
+        navigate('/project-detail');
         return;
       }
 
@@ -262,6 +263,7 @@ function AppContent({ currentView, setCurrentView }) {
               fileName: file.name,
               fileType: file.type,
               content: file.content,
+              prdSource: file.type === 'PRD Document' ? 'project_creation_flow' : null,
               metadata: {
                 original_id: file.id,
                 icon: file.icon,
@@ -330,7 +332,7 @@ function AppContent({ currentView, setCurrentView }) {
       setProjects(updatedProjects);
       setCurrentProject(transformedProject);
       setShowGuidanceOnProjectLoad(showGuidance);
-      setCurrentView('project-detail');
+      navigate('/project-detail');
       
       console.log('Project creation completed successfully');
     } catch (error) {
@@ -352,13 +354,13 @@ function AppContent({ currentView, setCurrentView }) {
       setProjects(updatedProjects);
       setCurrentProject(newProject);
       setShowGuidanceOnProjectLoad(showGuidance);
-      setCurrentView('project-detail');
+      navigate('/project-detail');
     }
   };
 
   const handleGenerateFile = (toolId, project) => {
     setCurrentProject(project);
-    setCurrentView(toolId);
+    navigate(`/${toolId}`);
   };
 
   // Function to update project design specs
@@ -459,6 +461,7 @@ function AppContent({ currentView, setCurrentView }) {
             fileName: fileName,
             fileType: fileType,
             content: content,
+            prdSource: fileType === 'PRD Document' ? 'project_detail_app' : null,
             metadata: {
               icon: fileType === 'PRD Document' ? 'FileText' : 'Code',
               generated_individually: true,
@@ -542,54 +545,33 @@ function AppContent({ currentView, setCurrentView }) {
     );
   }
 
-  // The landing page ('home') and design inspiration are public.
-  // For all other views, we check for authentication.
-  if (currentView !== 'home' && currentView !== 'design-inspiration' && !isAuthenticated) {
-    return <Auth />;
-  }
+  // Authentication is now handled within individual route components
 
-  const renderCurrentView = () => {
-    switch (currentView) {
-      case 'home':
         return (
-          <div className="min-h-screen bg-white">
-            <Header 
-              onNavigateToDashboard={() => setCurrentView('dashboard')}
-              onNavigateToDesignInspiration={() => setCurrentView('design-inspiration')}
-              onNavigateToHome={() => setCurrentView('home')}
-            />
-            <main className="max-w-6xl mx-auto px-6 py-12 pt-24">
-              <Hero onNavigateToFeature={handleNavigateToFeature} />
-            </main>
-          </div>
-        );
-
-      case 'dashboard':
-        return (
+    <div className="App">
+      <Routes>
+        <Route path="/" element={<HomePage />} />
+        <Route path="/dashboard" element={
           <Dashboard 
             projects={projects}
             loading={loadingProjects}
-            onNavigateToFeature={handleNavigateToFeature}
             onNavigateToProject={handleNavigateToProject}
             onSetupDatabase={() => setShowDatabaseSetup(true)}
           />
-        );
-
-      case 'create-project':
-        return (
+        } />
+        <Route path="/create-project" element={
           <ProjectCreationFlow 
-            onClose={() => setCurrentView('dashboard')}
+            onClose={() => navigate('/dashboard')}
             onProjectCreated={handleProjectCreated}
           />
-        );
-
-      case 'project-detail':
-        return currentProject ? (
+        } />
+        <Route path="/project-detail" element={
+          currentProject ? (
           <ProjectDetail 
             project={currentProject}
             onClose={() => {
               setShowGuidanceOnProjectLoad(false);
-              setCurrentView('dashboard');
+                navigate('/dashboard');
             }}
             onNavigateToFeature={handleNavigateToFeature}
             onGenerateFile={handleGenerateFile}
@@ -598,66 +580,48 @@ function AppContent({ currentView, setCurrentView }) {
           />
         ) : (
           <div>Project not found</div>
-        );
-
-      case 'prd-generator':
-        return (
+          )
+        } />
+        <Route path="/prd-generator" element={
           <PRDGenerator 
-            onClose={() => currentProject ? setCurrentView('project-detail') : setCurrentView('home')}
+            onClose={() => currentProject ? navigate('/project-detail') : navigate('/')}
             project={currentProject}
             onFileSaved={handleFileSaved}
           />
-        );
-
-      case 'feature-extractor':
-        return (
+        } />
+        <Route path="/feature-extractor" element={
           <FeatureExtractor 
-            onClose={() => currentProject ? setCurrentView('project-detail') : setCurrentView('home')}
+            onClose={() => currentProject ? navigate('/project-detail') : navigate('/')}
             project={currentProject}
           />
-        );
-
-      case 'files-guidance':
-        return (
-          <FilesGuidance onClose={() => setCurrentView('dashboard')} />
-        );
-
-      case 'cursor-tips':
-        return <CursorTips />;
-
-      case 'design-inspiration':
-        return (
-          <div className="min-h-screen bg-white">
-            <Header 
-              onNavigateToDashboard={() => setCurrentView('dashboard')}
-              onNavigateToDesignInspiration={() => setCurrentView('design-inspiration')}
-              onNavigateToHome={() => setCurrentView('home')}
-            />
+        } />
+        <Route path="/files-guidance" element={
+          <FilesGuidance onClose={() => navigate('/dashboard')} />
+        } />
+        <Route path="/cursor-tips" element={<CursorTips />} />
+        <Route path="/design-inspiration" element={
             <DesignInspiration onNavigateToFeature={handleNavigateToFeature} />
-          </div>
-        );
-
-      default:
-        return <div>Not Found</div>;
-    }
-  };
-
-  return (
-    <div className="App">
-      {renderCurrentView()}
+        } />
+        <Route path="/auth" element={<Auth />} />
+        <Route path="*" element={<div>Not Found</div>} />
+      </Routes>
+      
+      {showDatabaseSetup && (
+        <DatabaseSetup onClose={() => setShowDatabaseSetup(false)} />
+      )}
     </div>
   );
 }
 
 function App() {
-  const [currentView, setCurrentView] = useState('home');
-  
   return (
+    <Router>
     <AuthProvider>
-      <PaymentProvider onNavigate={setCurrentView}>
-        <AppContent currentView={currentView} setCurrentView={setCurrentView} />
+        <PaymentProvider>
+          <AppContent />
       </PaymentProvider>
     </AuthProvider>
+    </Router>
   );
 }
 

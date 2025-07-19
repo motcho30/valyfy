@@ -1,12 +1,17 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { X, ArrowRight, Check, Download, BookOpen } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 import DesignSelector from './DesignSelector';
 import ProjectGuidance from './ProjectGuidance';
 import { extractFeatures } from '../services/featureExtractionService';
 import { generatePRD } from '../services/prdGeneratorService';
 
 const ProjectCreationFlow = ({ onClose, onProjectCreated }) => {
+  const navigate = useNavigate();
+  const { isAuthenticated } = useAuth();
+
   // Project creation state
   const [projectName, setProjectName] = useState('');
   const [appIdea, setAppIdea] = useState('');
@@ -34,6 +39,18 @@ const ProjectCreationFlow = ({ onClose, onProjectCreated }) => {
   
   // Guidance state
   const [showGuidance, setShowGuidance] = useState(false);
+
+  // Redirect to auth if not authenticated
+  useEffect(() => {
+    if (!isAuthenticated) {
+      navigate('/auth');
+    }
+  }, [isAuthenticated, navigate]);
+
+  // Don't render anything if not authenticated (after all hooks are called)
+  if (!isAuthenticated) {
+    return null;
+  }
 
   const projectTypes = [
     'Web App',

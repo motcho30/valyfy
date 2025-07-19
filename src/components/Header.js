@@ -26,11 +26,7 @@ const Header = ({ onNavigateToDashboard, onNavigateToDesignInspiration, onNaviga
           </button>
           <nav className="flex space-x-6">
             <div className="relative">
-              <button 
-                className="text-gray-700 hover:text-black transition-colors duration-200"
-              >
-                Features
-              </button>
+
 
             </div>
             <button 
@@ -39,9 +35,7 @@ const Header = ({ onNavigateToDashboard, onNavigateToDesignInspiration, onNaviga
             >
               Design Inspiration
             </button>
-            <a href="#about" className="text-gray-700 hover:text-black transition-colors duration-200">
-              About valyfy
-            </a>
+
             <button 
               onClick={() => onNavigateToDashboard && onNavigateToDashboard()}
               className="text-gray-700 hover:text-black transition-colors duration-200"
