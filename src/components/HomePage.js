@@ -14,7 +14,7 @@ const HomePage = () => {
       if (isAuthenticated) {
         navigate('/create-project');
       } else {
-        navigate('/auth');
+        navigate('/auth?redirect=/create-project');
       }
     } else if (feature === 'design-inspiration') {
       navigate('/design-inspiration');
@@ -30,7 +30,7 @@ const HomePage = () => {
     if (isAuthenticated) {
       navigate('/dashboard');
     } else {
-      navigate('/auth');
+      navigate('/auth?redirect=/dashboard');
     }
   };
 

@@ -14,10 +14,10 @@ const Dashboard = ({ projects = [], loading = false, onNavigateToProject, onSetu
 
   const userName = profile?.full_name || user?.email?.split('@')[0] || 'Developer';
 
-  // Redirect to auth if not authenticated
+  // Redirect to auth if not authenticated, with redirect parameter
   useEffect(() => {
     if (!isAuthenticated) {
-      navigate('/auth');
+      navigate('/auth?redirect=/dashboard');
     }
   }, [isAuthenticated, navigate]);
 

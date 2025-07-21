@@ -140,13 +140,13 @@ export const PaymentProvider = ({ children }) => {
     window.history.replaceState({}, document.title, url.toString());
   };
 
-  const initiatePayment = async () => {
+  const initiatePayment = async (context = 'design-inspiration') => {
     try {
       if (!isAuthenticated) {
         throw new Error('User must be authenticated to make a payment');
       }
 
-      const { sessionId, url } = await paymentService.createCheckoutSession();
+      const { sessionId, url } = await paymentService.createCheckoutSession(window.location.origin, context);
       
       // Store payment attempt for state management
       paymentService.storePaymentAttempt(sessionId);

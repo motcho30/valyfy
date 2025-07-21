@@ -4,9 +4,10 @@ class PaymentService {
   /**
    * Creates a Stripe checkout session for design inspiration access
    * @param {string} origin - The origin URL for redirect URLs
+   * @param {string} context - The context for the payment (e.g., 'project-creation' or 'design-inspiration')
    * @returns {Promise<{sessionId: string, url: string}>}
    */
-  async createCheckoutSession(origin = window.location.origin) {
+  async createCheckoutSession(origin = window.location.origin, context = 'design-inspiration') {
     try {
       // Get current session to ensure user is authenticated
       const { data: { session }, error: sessionError } = await supabase.auth.getSession();
@@ -17,7 +18,7 @@ class PaymentService {
 
       // Call the Supabase Edge Function to create checkout session
       const { data, error } = await supabase.functions.invoke('create-checkout-session', {
-        body: { origin }
+        body: { origin, context }
       });
 
       if (error) {

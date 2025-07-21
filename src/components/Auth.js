@@ -1,13 +1,19 @@
 import React, { useState } from 'react'
 import { motion } from 'framer-motion'
 import { Eye, EyeOff, Mail, Lock, User, ArrowRight } from 'lucide-react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../services/supabase'
 
-const Auth = ({ onClose }) => {
+const Auth = ({ onClose, redirectTo }) => {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const [isSignUp, setIsSignUp] = useState(false)
+  
+  // Get redirect destination from props or URL params
+  const getRedirectPath = () => {
+    return redirectTo || searchParams.get('redirect') || '/dashboard'
+  }
   const [showPassword, setShowPassword] = useState(false)
   const [formData, setFormData] = useState({
     email: '',
@@ -38,7 +44,9 @@ const Auth = ({ onClose }) => {
           // Check if user is immediately logged in (no email verification)
           if (data.session) {
             console.log('🎉 User logged in immediately')
-            onClose ? onClose() : navigate('/dashboard')
+            const redirectPath = getRedirectPath()
+            console.log('🔄 Redirecting to:', redirectPath)
+            onClose ? onClose() : navigate(redirectPath)
           } else if (data.user && !data.session) {
             // Email verification required - show success message but don't close
             console.log('📧 Email verification required')
@@ -57,7 +65,9 @@ const Auth = ({ onClose }) => {
         console.log('📊 Signin result:', { data, error })
         if (!error) {
           console.log('✅ Signin successful!')
-          onClose ? onClose() : navigate('/dashboard')
+          const redirectPath = getRedirectPath()
+          console.log('🔄 Redirecting to:', redirectPath)
+          onClose ? onClose() : navigate(redirectPath)
         } else {
           console.error('❌ Signin error:', error)
         }

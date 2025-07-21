@@ -149,6 +149,13 @@ function AppContent() {
 
   const handleNavigateToFeature = (feature, project = null) => {
     setCurrentProject(project);
+    
+    // If navigating to create-project and user is not authenticated, redirect to auth with redirect param
+    if (feature === 'create-project' && !isAuthenticated) {
+      navigate('/auth?redirect=/create-project');
+      return;
+    }
+    
     navigate(`/${feature}`);
   };
 

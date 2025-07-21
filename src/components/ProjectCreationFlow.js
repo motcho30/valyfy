@@ -1,21 +1,29 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { X, ArrowRight, Check, Download, BookOpen } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { X, ArrowRight, Check } from 'lucide-react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { usePayment } from '../contexts/PaymentContext';
+import ProjectPaymentModal from './ProjectPaymentModal';
 import DesignSelector from './DesignSelector';
-import ProjectGuidance from './ProjectGuidance';
+
 import { extractFeatures } from '../services/featureExtractionService';
 import { generatePRD } from '../services/prdGeneratorService';
 
 const ProjectCreationFlow = ({ onClose, onProjectCreated }) => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { isAuthenticated } = useAuth();
+  const { hasAccess, isLoading: paymentLoading, isPaymentRequired, initiatePayment } = usePayment();
 
   // Project creation state
   const [projectName, setProjectName] = useState('');
   const [appIdea, setAppIdea] = useState('');
   const [projectType, setProjectType] = useState('Web App');
+  
+  // Payment modal state
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [isRestoringProject, setIsRestoringProject] = useState(false);
   
   // Flow state
   const [currentStep, setCurrentStep] = useState(1); // 1: Create, 2: Features, 3: Design, 4: Generate, 5: Complete
@@ -36,16 +44,84 @@ const ProjectCreationFlow = ({ onClose, onProjectCreated }) => {
   
   // Created project
   const [createdProject, setCreatedProject] = useState(null);
-  
-  // Guidance state
-  const [showGuidance, setShowGuidance] = useState(false);
 
-  // Redirect to auth if not authenticated
+
+  // Redirect to auth if not authenticated, with redirect parameter
   useEffect(() => {
     if (!isAuthenticated) {
-      navigate('/auth');
+      navigate('/auth?redirect=/create-project');
     }
   }, [isAuthenticated, navigate]);
+
+  // Handle payment success return from Stripe
+  useEffect(() => {
+    const paymentStatus = searchParams.get('payment');
+    const sessionId = searchParams.get('session_id');
+    
+    if (paymentStatus === 'success' && sessionId) {
+      console.log('💳 Payment successful! Session ID:', sessionId);
+      setIsRestoringProject(true);
+      
+      // Try to restore project from localStorage
+      const savedProjectData = localStorage.getItem('project_creation_state');
+      if (savedProjectData) {
+        try {
+          const projectData = JSON.parse(savedProjectData);
+          console.log('🔄 Restoring project creation state:', projectData);
+          setCreatedProject(projectData);
+          localStorage.removeItem('project_creation_state'); // Clean up
+          
+          // Navigate to project dashboard after a brief delay to show success
+          setTimeout(() => {
+            setIsRestoringProject(false);
+            onProjectCreated && onProjectCreated(projectData, false);
+          }, 2000);
+        } catch (error) {
+          console.error('❌ Failed to restore project state:', error);
+          setIsRestoringProject(false);
+        }
+      } else {
+        setIsRestoringProject(false);
+      }
+      
+      // Clean up URL
+      const url = new URL(window.location);
+      url.searchParams.delete('payment');
+      url.searchParams.delete('session_id');
+      window.history.replaceState({}, document.title, url.toString());
+      
+    } else if (paymentStatus === 'cancelled') {
+      console.log('💳 Payment cancelled by user');
+      
+      // Try to restore project from localStorage and show paywall again
+      const savedProjectData = localStorage.getItem('project_creation_state');
+      if (savedProjectData) {
+        try {
+          const projectData = JSON.parse(savedProjectData);
+          console.log('🔄 Restoring project creation state after cancelled payment');
+          setCreatedProject(projectData);
+          setCurrentStep(5); // Show completion step
+          // Don't remove localStorage yet in case they want to retry payment
+        } catch (error) {
+          console.error('❌ Failed to restore project state:', error);
+        }
+      }
+      
+      // Clean up URL
+      const url = new URL(window.location);
+      url.searchParams.delete('payment');
+      window.history.replaceState({}, document.title, url.toString());
+    }
+  }, [searchParams, onProjectCreated]);
+
+  // Monitor payment status changes to proceed after successful payment
+  useEffect(() => {
+    if (createdProject && isAuthenticated && !isPaymentRequired && showPaymentModal) {
+      console.log('✅ Payment successful, proceeding to project dashboard...');
+      setShowPaymentModal(false);
+      onProjectCreated && onProjectCreated(createdProject, false); // No guidance needed
+    }
+  }, [isPaymentRequired, isAuthenticated, createdProject, showPaymentModal, onProjectCreated]);
 
   // Don't render anything if not authenticated (after all hooks are called)
   if (!isAuthenticated) {
@@ -172,12 +248,22 @@ const ProjectCreationFlow = ({ onClose, onProjectCreated }) => {
       console.log('Project with generated files:', updatedProject); // Debug log
       
       setCurrentStep(5); // Complete
-      onProjectCreated && onProjectCreated(updatedProject, true); // Pass flag to show guidance
+      setCreatedProject(updatedProject);
       
-      // Auto-trigger guidance after a short delay
-      setTimeout(() => {
-        setShowGuidance(true);
-      }, 2000);
+      // Check if payment is required after project generation
+      if (isAuthenticated && isPaymentRequired) {
+        console.log('🔒 Payment required, showing paywall...');
+        
+        // Save project state before showing paywall
+        localStorage.setItem('project_creation_state', JSON.stringify(updatedProject));
+        console.log('💾 Saved project state for payment flow');
+        
+        setShowPaymentModal(true);
+        return; // Don't show the project yet
+      }
+      
+      // If no payment required, proceed to dashboard
+      onProjectCreated && onProjectCreated(updatedProject, false); // No guidance needed
     } catch (error) {
       setGenerationError(error.message);
     } finally {
@@ -185,20 +271,19 @@ const ProjectCreationFlow = ({ onClose, onProjectCreated }) => {
     }
   };
 
-  const handleDownload = (content, filename) => {
-    const blob = new Blob([content], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = filename;
-    a.click();
-    URL.revokeObjectURL(url);
-  };
+
 
   const handleBack = () => {
     if (currentStep > 1) {
       setCurrentStep(currentStep - 1);
     }
+  };
+
+  // Handle payment modal closure
+  const handlePaymentModalClose = () => {
+    console.log('💳 Payment modal closed without payment');
+    setShowPaymentModal(false);
+    // Keep user on the completion step, they can still download files or try payment again
   };
 
   return (
@@ -235,8 +320,39 @@ const ProjectCreationFlow = ({ onClose, onProjectCreated }) => {
       </motion.header>
 
       <main className="max-w-6xl mx-auto px-6 pt-32 pb-12 flex flex-col min-h-screen">
+        
+        {/* Payment Success & Project Restoration */}
+        {isRestoringProject && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="flex-grow flex flex-col items-center justify-center text-center"
+          >
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ delay: 0.2, type: "spring" }}
+              className="w-20 h-20 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-8"
+            >
+              <Check className="w-10 h-10 text-white" />
+            </motion.div>
+
+            <h1 className="font-jersey text-4xl md:text-5xl text-black leading-tight mb-4">
+              Payment Successful! 🎉
+            </h1>
+            <p className="text-black/60 text-lg mb-8">
+              Restoring your project and setting up your dashboard...
+            </p>
+            
+            <motion.div
+              animate={{ rotate: 360 }}
+              transition={{ duration: 1.5, repeat: Infinity, ease: 'linear' }}
+              className="w-8 h-8 border-2 border-vibe-cyan border-t-transparent rounded-full"
+            />
+          </motion.div>
+        )}
         {/* Step 1: Create Project */}
-        {currentStep === 1 && (
+        {!isRestoringProject && currentStep === 1 && (
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
@@ -433,7 +549,7 @@ const ProjectCreationFlow = ({ onClose, onProjectCreated }) => {
         )}
 
         {/* Step 2: Feature Selection */}
-        {currentStep === 2 && !isExtracting && (
+        {!isRestoringProject && currentStep === 2 && !isExtracting && (
           <motion.div 
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
@@ -461,7 +577,7 @@ const ProjectCreationFlow = ({ onClose, onProjectCreated }) => {
         )}
 
         {/* Step 3: Design Selection */}
-        {currentStep === 3 && (
+        {!isRestoringProject && currentStep === 3 && (
           <DesignSelector
             onDesignSelected={handleDesignSelection}
             onBack={handleBack}
@@ -470,7 +586,7 @@ const ProjectCreationFlow = ({ onClose, onProjectCreated }) => {
         )}
 
         {/* Step 4: Generating Files */}
-        {currentStep === 4 && (
+        {!isRestoringProject && currentStep === 4 && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -492,7 +608,7 @@ const ProjectCreationFlow = ({ onClose, onProjectCreated }) => {
         )}
 
         {/* Step 5: Complete */}
-        {currentStep === 5 && (
+        {!isRestoringProject && currentStep === 5 && (
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
@@ -514,72 +630,70 @@ const ProjectCreationFlow = ({ onClose, onProjectCreated }) => {
               Your {createdProject?.name} is ready with generated PRD
             </p>
             
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 1 }}
-              className="bg-vibe-cyan/20 border border-vibe-cyan/30 rounded-xl p-4 mb-12 max-w-md mx-auto"
-            >
-              <p className="text-sm text-black/70">
-                ✨ <strong>Setup guide coming up!</strong> We'll show you how to configure everything in just a moment...
-              </p>
-            </motion.div>
-
-            <div className="max-w-2xl mx-auto space-y-4 mb-12">
-              {/* PRD Download */}
+            {isAuthenticated && isPaymentRequired ? (
               <motion.div
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.4 }}
-                className="bg-white/60 backdrop-blur-xl border border-black/10 rounded-xl p-6 flex items-center justify-between"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 1 }}
+                className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-12 max-w-md mx-auto"
               >
-                <div className="text-left">
-                  <h3 className="font-semibold text-black">Product Requirements Document</h3>
-                  <p className="text-sm text-black/60">Comprehensive project specifications</p>
-                </div>
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={() => handleDownload(generatedPRD, `${createdProject?.name.replace(/\s+/g, '-')}-prd.md`)}
-                  className="px-4 py-2 bg-vibe-cyan text-black rounded-lg font-medium hover:shadow-lg transition-all flex items-center space-x-2"
-                >
-                  <Download className="w-4 h-4" />
-                  <span>Download</span>
-                </motion.button>
+                <p className="text-sm text-amber-800">
+                  🔒 <strong>Upgrade to Pro</strong> to access your project dashboard, generate additional files, and unlock all features!
+                </p>
               </motion.div>
-
-
-            </div>
-
-            <div className="flex justify-center space-x-4">
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => setShowGuidance(true)}
-                className="px-8 py-3 bg-vibe-cyan text-black rounded-xl font-semibold hover:shadow-lg transition-all flex items-center space-x-2"
+            ) : (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 1 }}
+                className="bg-vibe-cyan/20 border border-vibe-cyan/30 rounded-xl p-4 mb-12 max-w-md mx-auto"
               >
-                <BookOpen className="w-5 h-5" />
-                <span>Setup Guide</span>
-              </motion.button>
-              
+                <p className="text-sm text-black/70">
+                  ✨ <strong>Setup guide coming up!</strong> We'll show you how to configure everything in just a moment...
+                </p>
+              </motion.div>
+            )}
+
+
+
+            <div className="flex justify-center">
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                onClick={onClose}
+                onClick={async () => {
+                  if (isAuthenticated && isPaymentRequired) {
+                    // Direct payment without showing modal
+                    try {
+                      await initiatePayment('project-creation');
+                      // Payment service will redirect to Stripe
+                    } catch (error) {
+                      console.error('Direct payment failed:', error);
+                      setShowPaymentModal(true); // Fallback to modal
+                    }
+                  } else {
+                    onClose();
+                  }
+                }}
                 className="px-8 py-3 bg-slate-800 text-white rounded-xl font-semibold hover:shadow-lg transition-all"
               >
-                Go to Dashboard
+                {isAuthenticated && isPaymentRequired ? 'Upgrade to Pro - £5' : 'Go to Dashboard'}
               </motion.button>
             </div>
           </motion.div>
         )}
       </main>
 
-      {/* Project Setup Guidance */}
-      <ProjectGuidance
+
+
+      {/* Project Payment Modal */}
+      <ProjectPaymentModal 
+        isOpen={showPaymentModal}
+        onClose={handlePaymentModalClose}
         project={createdProject}
-        onClose={() => setShowGuidance(false)}
-        isVisible={showGuidance}
+        onPaymentInitiated={() => {
+          setShowPaymentModal(false);
+          // Payment service will handle the redirect to Stripe
+        }}
       />
     </div>
   );

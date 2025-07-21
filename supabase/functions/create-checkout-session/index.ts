@@ -98,6 +98,7 @@ serve(async (req) => {
       console.log('- Currency: gbp') 
       console.log('- User ID:', user.id)
       console.log('- User email:', user.email)
+      console.log('- Context:', requestBody.context || 'design-inspiration')
       
       const session = await stripe.checkout.sessions.create({
         payment_method_types: ['card'],
@@ -117,8 +118,12 @@ serve(async (req) => {
         mode: 'payment',
         client_reference_id: user.id,
         customer_email: user.email,
-        success_url: `${req.headers.get('origin')}/?payment=success&session_id={CHECKOUT_SESSION_ID}#design-inspiration`,
-        cancel_url: `${req.headers.get('origin')}/?payment=cancelled#design-inspiration`,
+        success_url: requestBody.context === 'project-creation' 
+          ? `${req.headers.get('origin')}/create-project?payment=success&session_id={CHECKOUT_SESSION_ID}`
+          : `${req.headers.get('origin')}/?payment=success&session_id={CHECKOUT_SESSION_ID}#design-inspiration`,
+        cancel_url: requestBody.context === 'project-creation'
+          ? `${req.headers.get('origin')}/create-project?payment=cancelled`
+          : `${req.headers.get('origin')}/?payment=cancelled#design-inspiration`,
         metadata: {
           user_id: user.id,
           user_email: user.email || '',
