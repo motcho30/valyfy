@@ -626,21 +626,108 @@ const ProjectCreationFlow = ({ onClose, onProjectCreated }) => {
             <h1 className="font-jersey text-4xl md:text-5xl text-black leading-tight mb-4">
               Project Created! 🎉
             </h1>
-            <p className="text-black/60 text-lg mb-4">
+            <p className="text-black/60 text-lg mb-8">
               Your {createdProject?.name} is ready with generated PRD
             </p>
             
             {isAuthenticated && isPaymentRequired ? (
               <motion.div
-                initial={{ opacity: 0, y: 10 }}
+                initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 1 }}
-                className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-12 max-w-md mx-auto"
+                transition={{ delay: 0.5 }}
+                className="max-w-4xl mx-auto mb-12"
               >
-                <p className="text-sm text-amber-800">
-                  🔒 <strong>Upgrade to Pro</strong> to access your project dashboard, generate additional files, and unlock all features!
-                </p>
-              </motion.div>
+                {/* Value Preview Section */}
+                <div className="bg-gradient-to-br from-white to-gray-50 border border-gray-200 rounded-2xl p-8 mb-8 shadow-lg">
+                  <div className="text-center mb-6">
+                    <h2 className="text-2xl font-bold text-black mb-2">
+                      Your Complete PRD Document is Ready! 📋
+                    </h2>
+                    <div className="flex justify-center items-center space-x-6 text-sm text-gray-600">
+                      <div className="flex items-center space-x-1">
+                        <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                        <span>{selectedFeatures.length} Features Analyzed</span>
+                      </div>
+                      <div className="flex items-center space-x-1">
+                        <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
+                        <span>{selectedDesign?.name || 'Custom'} Design Applied</span>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* Blurred Content Preview */}
+                  <div className="relative">
+                    <div className="bg-white border border-gray-200 rounded-xl p-6 max-h-96 overflow-hidden relative">
+                      <div className="prose max-w-none text-left">
+                        <pre className="whitespace-pre-wrap text-sm text-gray-700 font-mono leading-relaxed">
+                          {generatedPRD.substring(0, 1500)}...
+                        </pre>
+                      </div>
+                      
+                      {/* Blur overlay */}
+                      <div 
+                        className="absolute inset-0 backdrop-blur-sm bg-white/30"
+                        style={{
+                          background: 'linear-gradient(180deg, transparent 0%, rgba(255,255,255,0.3) 30%, rgba(255,255,255,0.8) 70%, rgba(255,255,255,0.95) 100%)'
+                        }}
+                      />
+                      
+                      {/* Lock overlay */}
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <motion.div
+                          initial={{ scale: 0 }}
+                          animate={{ scale: 1 }}
+                          transition={{ delay: 2, type: "spring" }}
+                          className="bg-white/90 backdrop-blur-xl border border-gray-200 rounded-2xl p-6 shadow-xl max-w-md mx-4"
+                        >
+                          <div className="text-center">
+                            <div className="w-12 h-12 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                              <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                              </svg>
+                            </div>
+                            <h3 className="text-lg font-bold text-black mb-2">
+                              Unlock Your Complete PRD
+                            </h3>
+                            <p className="text-sm text-gray-600 mb-4">
+                              Full document with technical specifications, user stories, API requirements, and implementation roadmap
+                            </p>
+                            <div className="flex items-center justify-center space-x-2 text-xs text-gray-500 mb-6">
+                              <span>• Technical Architecture</span>
+                              <span>• User Flow Diagrams</span>
+                              <span>• Development Timeline</span>
+                            </div>
+                            
+                            {/* Unlock Button */}
+                            <motion.button
+                              whileHover={{ scale: 1.05 }}
+                              whileTap={{ scale: 0.95 }}
+                              onClick={async () => {
+                                try {
+                                  await initiatePayment('project-creation');
+                                } catch (error) {
+                                  console.error('Payment failed:', error);
+                                  setShowPaymentModal(true);
+                                }
+                              }}
+                              className="w-full px-6 py-3 bg-gradient-to-r from-yellow-400 to-orange-500 text-white rounded-xl font-semibold hover:shadow-lg transition-all"
+                            >
+                              🔓 Unlock for £5
+                            </motion.button>
+                          </div>
+                        </motion.div>
+                      </div>
+                    </div>
+                    
+                    {/* Scroll indicator */}
+                    <div className="text-center mt-4">
+                      <span className="text-xs text-gray-400">
+                        {Math.round(generatedPRD.length / 100)} more sections below...
+                      </span>
+                    </div>
+                  </div>
+                                </div>
+                </motion.div>
             ) : (
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
@@ -654,31 +741,18 @@ const ProjectCreationFlow = ({ onClose, onProjectCreated }) => {
               </motion.div>
             )}
 
-
-
-            <div className="flex justify-center">
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={async () => {
-                  if (isAuthenticated && isPaymentRequired) {
-                    // Direct payment without showing modal
-                    try {
-                      await initiatePayment('project-creation');
-                      // Payment service will redirect to Stripe
-                    } catch (error) {
-                      console.error('Direct payment failed:', error);
-                      setShowPaymentModal(true); // Fallback to modal
-                    }
-                  } else {
-                    onClose();
-                  }
-                }}
-                className="px-8 py-3 bg-slate-800 text-white rounded-xl font-semibold hover:shadow-lg transition-all"
-              >
-                {isAuthenticated && isPaymentRequired ? 'Upgrade to Pro - £5' : 'Go to Dashboard'}
-              </motion.button>
-            </div>
+            {!isPaymentRequired && (
+              <div className="flex justify-center">
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={onClose}
+                  className="px-8 py-3 bg-slate-800 text-white rounded-xl font-semibold hover:shadow-lg transition-all"
+                >
+                  Go to Dashboard
+                </motion.button>
+              </div>
+            )}
           </motion.div>
         )}
       </main>
