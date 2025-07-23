@@ -18,7 +18,7 @@ const DesignInspiration = ({ onNavigateToFeature }) => {
 
   // Helper function to check if a card is free
   const isCardFree = (cardId) => {
-    return cardId === 1; // Homerun card (id: 1) is free
+    return cardId === 1 || cardId === 8; // Homerun card (id: 1) and Netflix card (id: 8) are free
   };
 
   // Helper function to check if payment is required for a specific card
@@ -7670,6 +7670,19 @@ This comprehensive analysis provides all technical specifications needed to repl
     }
   ];
 
+  // Reorder cards according to the desired sequence: netflix, cursor, cluely, airbnb, discord, figma, notion, homerun, jasper
+  const reorderedDesignCards = [
+    designCards.find(card => card.id === 8), // Netflix
+    designCards.find(card => card.id === 7), // Cursor
+    designCards.find(card => card.id === 2), // Cluely
+    designCards.find(card => card.id === 3), // Airbnb
+    designCards.find(card => card.id === 4), // Discord
+    designCards.find(card => card.id === 6), // Figma
+    designCards.find(card => card.id === 5), // Notion
+    designCards.find(card => card.id === 1), // Homerun
+    designCards.find(card => card.id === 9), // Jasper AI
+  ].filter(Boolean); // Remove any undefined cards
+
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
@@ -7959,7 +7972,7 @@ This comprehensive analysis provides all technical specifications needed to repl
             transition={{ duration: 0.8, delay: 0.2 }}
             className="font-bold text-4xl md:text-5xl lg:text-6xl text-black leading-tight mb-6 tracking-tight"
           >
-            Transform your website design in seconds
+            Copy design prompts from top websites
           </motion.h1>
           <motion.p 
             initial={{ opacity: 0, y: 20 }}
@@ -7970,6 +7983,33 @@ This comprehensive analysis provides all technical specifications needed to repl
             Stop wasting time screenshotting websites and telling Cursor to make your design like it. 
             Ready-made design prompts to copy and paste in your Cursor chat.
           </motion.p>
+          
+          {/* Simple Pro Badge */}
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.6 }}
+            className="mt-6 flex justify-center"
+          >
+            <div className="inline-flex items-center px-4 py-2 bg-gray-100 border border-gray-200 rounded-full text-sm text-gray-700">
+              <svg className="w-4 h-4 mr-2 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 0 00-8 0v4h8z" />
+              </svg>
+              Get Pro to access all design prompts for lifetime access{' '}
+              <button
+                onClick={() => {
+                  if (!isAuthenticated) {
+                    setShowAuthModal(true);
+                  } else {
+                    setShowPaymentModal(true);
+                  }
+                }}
+                className="text-blaxk-600 hover:text-black-800 underline font-medium ml-1 transition-colors duration-200"
+              >
+                                 {isAuthenticated ? 'upgrade now' : 'sign up'}
+              </button>
+            </div>
+          </motion.div>
           
           {/* Debug helper - remove in production */}
           {process.env.NODE_ENV === 'development' && (
@@ -8000,7 +8040,7 @@ This comprehensive analysis provides all technical specifications needed to repl
       >
         <div className="max-w-6xl mx-auto">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {designCards.map((card) => (
+            {reorderedDesignCards.map((card) => (
               <motion.div
                 key={card.id}
                 variants={cardVariants}
@@ -8012,12 +8052,19 @@ This comprehensive analysis provides all technical specifications needed to repl
                 onClick={() => setSelectedCard(card)}
               >
                 <div className="bg-white rounded-xl p-6 h-full transition-all duration-300 hover:shadow-lg border border-gray-200 hover:border-gray-300 relative">
-                  {/* Lock Icon for Paid Cards */}
-                  {!isCardFree(card.id) && isPaymentRequiredForCard(card.id) && (
-                    <div className="absolute top-3 right-3 w-6 h-6 bg-gray-100 rounded-full flex items-center justify-center">
-                      <svg className="w-3 h-3 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  {/* Lock Icon for Paid Cards - shows when card is not free and user doesn't have access */}
+                  {!isCardFree(card.id) && !hasAccess && (
+                    <div className="absolute top-3 right-3 w-8 h-8 bg-gray-900 bg-opacity-80 rounded-full flex items-center justify-center backdrop-blur-sm">
+                      <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                       </svg>
+                    </div>
+                  )}
+                  
+                  {/* FREE Tag for Free Cards */}
+                  {isCardFree(card.id) && (
+                    <div className="absolute top-3 right-3 bg-gradient-to-r from-green-400 to-green-600 text-white px-3 py-1 rounded-full text-sm font-bold shadow-lg border-2 border-white">
+                      FREE
                     </div>
                   )}
                   
