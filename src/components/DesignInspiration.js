@@ -82,6 +82,32 @@ const DesignInspiration = ({ onNavigateToFeature }) => {
   
   const prefixText = `Transform my current website design, CSS styling and overall frontend into the following strict and descriptive design and frontend specification document. Make sure to not change any copy, context or functionality we currently have in the website, this is solely a design UI/UX and frontend redesign.
 
+IMPORTANT COMPONENT LIBRARY REQUIREMENT:
+You MUST use shadcn/ui for all UI components to ensure accessibility, consistency, and modern design patterns. shadcn/ui is a collection of copy-and-paste components built on top of Radix UI primitives and styled with version 3 of Tailwind CSS.
+
+Installation & Setup:
+1. Install shadcn/ui CLI: npx shadcn-ui@latest init
+2. Configure your components.json when prompted
+3. Add components as needed: npx shadcn-ui@latest add [component-name]
+
+Key Benefits:
+- Fully accessible components built on Radix UI primitives
+- Beautifully designed with consistent styling
+- Customizable and themeable
+- TypeScript support out of the box
+- Copy-paste friendly - you own the code
+- Works seamlessly with Tailwind CSS
+
+Usage Guidelines:
+- Use shadcn/ui components for buttons, forms, modals, navigation, cards, etc.
+- Examples: npx shadcn-ui@latest add button card form dialog navigation-menu
+- Import components from your components/ui directory
+- Customize component variants using the built-in variant system
+- Leverage the built-in dark mode support
+- Follow the component composition patterns for complex UI elements
+
+Always prioritize shadcn/ui components over custom implementations to maintain design consistency and accessibility standards.
+
 `;
 
   const designCards = [
