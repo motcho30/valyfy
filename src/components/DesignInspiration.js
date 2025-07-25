@@ -4378,6 +4378,218 @@ components/
 @media (min-width: 1536px) { /* 2xl */ }
 \`\`\`
 
+## Footer Component Implementation
+
+The codebase should support:
+- shadcn project structure  
+- Tailwind CSS
+- Typescript
+
+If it doesn't, provide instructions on how to setup project via shadcn CLI, install Tailwind or Typescript.
+
+Determine the default path for components and styles. 
+If default path for components is not /components/ui, provide instructions on why it's important to create this folder
+Copy-paste this component to /components/ui folder:
+
+\`\`\`tsx
+animated-footer.tsx
+"use client"
+import React, { useEffect, useRef, useState } from "react";
+
+interface LinkItem {
+  href: string;
+  label: string;
+}
+
+interface FooterProps {
+  leftLinks: LinkItem[];
+  rightLinks: LinkItem[];
+  copyrightText: string;
+  barCount?: number; 
+}
+
+const Footer: React.FC<FooterProps> = ({
+  leftLinks,
+  rightLinks,
+  copyrightText,
+  barCount = 23, 
+}) => {
+  const waveRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const footerRef = useRef<HTMLDivElement | null>(null);
+  const [isVisible, setIsVisible] = useState(false);
+  const animationFrameRef = useRef<number | null>(null);
+
+  
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const [entry] = entries;
+        setIsVisible(entry.isIntersecting);
+      },
+      { threshold: 0.2 } 
+    );
+
+    if (footerRef.current) {
+      observer.observe(footerRef.current);
+    }
+
+    return () => {
+      if (footerRef.current) {
+        observer.unobserve(footerRef.current);
+      }
+    };
+  }, []);
+
+
+  useEffect(() => {
+    let t = 0; 
+
+    const animateWave = () => {
+      const waveElements = waveRefs.current;
+      let offset = 0;
+
+      waveElements.forEach((element, index) => {
+        if (element) {
+          offset += Math.max(0, 20 * Math.sin((t + index) * 0.3)); 
+          element.style.transform = \`translateY(\${index + offset}px)\`;
+        }
+      });
+
+      t += 0.1;
+      animationFrameRef.current = requestAnimationFrame(animateWave);
+    };
+
+    if (isVisible) {
+      animateWave();
+    } else if (animationFrameRef.current) {
+      cancelAnimationFrame(animationFrameRef.current);
+      animationFrameRef.current = null;
+    }
+
+    return () => {
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+        animationFrameRef.current = null;
+      }
+    };
+  }, [isVisible]);
+
+  return (
+    <footer
+      ref={footerRef}
+      className="bg-black text-white relative flex flex-col w-full h-full justify-between lg:h-screen select-none"
+    >
+      <div className="container mx-auto flex flex-col md:flex-row justify-between w-full gap-4 pb-24 pt-8 px-4">
+        <div className="space-y-2">
+          <ul className="flex flex-wrap gap-4">
+            {leftLinks.map((link, index) => (
+              <li key={index}>
+                <a href={link.href} className="text-sm hover:text-sky-400">
+                  {link.label}
+                </a>
+              </li>
+            ))}
+          </ul>
+          <p className="text-sm mt-4 flex items-center gap-x-1">
+            <svg className="size-3" viewBox="0 0 80 80">
+              <path
+                fillRule="evenodd"
+                clipRule="evenodd"
+                fill="currentColor"
+                d="M67.4307 11.5693C52.005 -3.85643 26.995 -3.85643 11.5693 11.5693C-3.85643 26.995 -3.85643 52.005 11.5693 67.4307C26.995 82.8564 52.005 82.8564 67.4307 67.4307C82.8564 52.005 82.8564 26.995 67.4307 11.5693ZM17.9332 17.9332C29.8442 6.02225 49.1558 6.02225 61.0668 17.9332C72.9777 29.8442 72.9777 49.1558 61.0668 61.0668C59.7316 62.4019 58.3035 63.5874 56.8032 64.6232L56.8241 64.6023C46.8657 54.6439 46.8657 38.4982 56.8241 28.5398L58.2383 27.1256L51.8744 20.7617L50.4602 22.1759C40.5018 32.1343 24.3561 32.1343 14.3977 22.1759L14.3768 22.1968C15.4126 20.6965 16.5981 19.2684 17.9332 17.9332ZM34.0282 38.6078C25.6372 38.9948 17.1318 36.3344 10.3131 30.6265C7.56889 39.6809 9.12599 49.76 14.9844 57.6517L34.0282 38.6078ZM21.3483 64.0156C29.24 69.874 39.3191 71.4311 48.3735 68.6869C42.6656 61.8682 40.0052 53.3628 40.3922 44.9718L21.3483 64.0156Z"
+              />
+            </svg>
+            {copyrightText}
+          </p>
+        </div>
+        <div className="space-y-4">
+          <ul className="flex flex-wrap gap-4">
+            {rightLinks.map((link, index) => (
+              <li key={index}>
+                <a href={link.href} className="text-sm hover:text-sky-400">
+                  {link.label}
+                </a>
+              </li>
+            ))}
+          </ul>
+          <div className="text-right mt-4">
+            <button className="text-sm hover:underline inline-flex items-center">
+              Back to top
+            </button>
+          </div>
+        </div>
+      </div>
+      <div
+        id="waveContainer"
+        aria-hidden="true"
+        style={{ overflow: "hidden", height: 200 }}
+      >
+        <div style={{ marginTop: 0 }}>
+          {Array.from({ length: barCount }).map((_, index) => (
+            <div
+              key={index}
+              ref={(el) => { waveRefs.current[index] = el; }}
+              className="wave-segment"
+              style={{
+                height: \`\${index + 1}px\`,
+                backgroundColor: "rgb(255, 255, 255)",
+                transition: "transform 0.1s ease",
+                willChange: "transform",
+                marginTop: "-2px",
+              }}
+            />
+          ))}
+        </div>
+      </div>
+    </footer>
+  );
+};
+
+export default Footer;
+
+demo.tsx
+import Footer from "@/components/ui/animated-footer";
+
+const DemoOne = () => {
+  return  <Footer
+          leftLinks={[
+            { href: "/terms", label: "Terms & policies" },
+            { href: "/privacy-policy", label: "Privacy policy" },
+          ]}
+          rightLinks={[
+            { href: "/careers", label: "Careers" },
+            { href: "/about", label: "About" },
+            { href: "/help-center", label: "Help Center" },
+            { href: "https://x.com/taher_max_", label: "Twitter" },
+            { href: "https://www.instagram.com/taher_max_", label: "Instagram" },
+            { href: "https://github.com/tahermaxse", label: "GitHub" },
+          ]}
+          copyrightText="Cluely 2025. All Rights Reserved"
+          barCount={23}
+        />;
+};
+
+export { DemoOne };
+
+\`\`\`
+
+Implementation Guidelines
+ 1. Analyze the component structure and identify all required dependencies
+ 2. Review the component's argumens and state
+ 3. Identify any required context providers or hooks and install them
+ 4. Questions to Ask
+ - What data/props will be passed to this component?
+ - Are there any specific state management requirements?
+ - Are there any required assets (images, icons, etc.)?
+ - What is the expected responsive behavior?
+ - What is the best place to use this component in the app?
+
+Steps to integrate
+ 0. Copy paste all the code above in the correct directories
+ 1. Install external dependencies
+ 2. Fill image assets with Unsplash stock images you know exist
+ 3. Use lucide-react icons for svgs or logos if component requires them
+
  This comprehensive analysis provides all the technical details needed to replicate the website's design system, component structure, and visual implementation across any frontend framework or styling approach.`
     },
     {
@@ -5009,6 +5221,203 @@ components/
   font-weight: 700;
 }
 \`\`\`
+
+## Testimonials Component Implementation
+
+The codebase should support:
+- shadcn project structure  
+- Tailwind CSS
+- Typescript
+
+If it doesn't, provide instructions on how to setup project via shadcn CLI, install Tailwind or Typescript.
+
+Determine the default path for components and styles. 
+If default path for components is not /components/ui, provide instructions on why it's important to create this folder
+Copy-paste this component to /components/ui folder:
+
+\`\`\`tsx
+testimonials-columns-1.tsx
+"use client";
+import React from "react";
+import { motion } from "motion/react";
+
+
+export const TestimonialsColumn = (props: {
+  className?: string;
+  testimonials: typeof testimonials;
+  duration?: number;
+}) => {
+  return (
+    <div className={props.className}>
+      <motion.div
+        animate={{
+          translateY: "-50%",
+        }}
+        transition={{
+          duration: props.duration || 10,
+          repeat: Infinity,
+          ease: "linear",
+          repeatType: "loop",
+        }}
+        className="flex flex-col gap-6 pb-6 bg-background"
+      >
+        {[
+          ...new Array(2).fill(0).map((_, index) => (
+            <React.Fragment key={index}>
+              {props.testimonials.map(({ text, image, name, role }, i) => (
+                <div className="p-10 rounded-3xl border shadow-lg shadow-primary/10 max-w-xs w-full" key={i}>
+                  <div>{text}</div>
+                  <div className="flex items-center gap-2 mt-5">
+                    <img
+                      width={40}
+                      height={40}
+                      src={image}
+                      alt={name}
+                      className="h-10 w-10 rounded-full"
+                    />
+                    <div className="flex flex-col">
+                      <div className="font-medium tracking-tight leading-5">{name}</div>
+                      <div className="leading-5 opacity-60 tracking-tight">{role}</div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </React.Fragment>
+          )),
+        ]}
+      </motion.div>
+    </div>
+  );
+};
+
+;
+
+demo.tsx
+import { TestimonialsColumn } from "@/components/ui/testimonials-columns-1";
+import { motion } from "motion/react";
+
+const testimonials = [
+  {
+    text: "This ERP revolutionized our operations, streamlining finance and inventory. The cloud-based platform keeps us productive, even remotely.",
+    image: "https://randomuser.me/api/portraits/women/1.jpg",
+    name: "Briana Patton",
+    role: "Operations Manager",
+  },
+  {
+    text: "Implementing this ERP was smooth and quick. The customizable, user-friendly interface made team training effortless.",
+    image: "https://randomuser.me/api/portraits/men/2.jpg",
+    name: "Bilal Ahmed",
+    role: "IT Manager",
+  },
+  {
+    text: "The support team is exceptional, guiding us through setup and providing ongoing assistance, ensuring our satisfaction.",
+    image: "https://randomuser.me/api/portraits/women/3.jpg",
+    name: "Saman Malik",
+    role: "Customer Support Lead",
+  },
+  {
+    text: "This ERP's seamless integration enhanced our business operations and efficiency. Highly recommend for its intuitive interface.",
+    image: "https://randomuser.me/api/portraits/men/4.jpg",
+    name: "Omar Raza",
+    role: "CEO",
+  },
+  {
+    text: "Its robust features and quick support have transformed our workflow, making us significantly more efficient.",
+    image: "https://randomuser.me/api/portraits/women/5.jpg",
+    name: "Zainab Hussain",
+    role: "Project Manager",
+  },
+  {
+    text: "The smooth implementation exceeded expectations. It streamlined processes, improving overall business performance.",
+    image: "https://randomuser.me/api/portraits/women/6.jpg",
+    name: "Aliza Khan",
+    role: "Business Analyst",
+  },
+  {
+    text: "Our business functions improved with a user-friendly design and positive customer feedback.",
+    image: "https://randomuser.me/api/portraits/men/7.jpg",
+    name: "Farhan Siddiqui",
+    role: "Marketing Director",
+  },
+  {
+    text: "They delivered a solution that exceeded expectations, understanding our needs and enhancing our operations.",
+    image: "https://randomuser.me/api/portraits/women/8.jpg",
+    name: "Sana Sheikh",
+    role: "Sales Manager",
+  },
+  {
+    text: "Using this ERP, our online presence and conversions significantly improved, boosting business performance.",
+    image: "https://randomuser.me/api/portraits/men/9.jpg",
+    name: "Hassan Ali",
+    role: "E-commerce Manager",
+  },
+];
+
+
+const firstColumn = testimonials.slice(0, 3);
+const secondColumn = testimonials.slice(3, 6);
+const thirdColumn = testimonials.slice(6, 9);
+
+
+const Testimonials = () => {
+  return (
+    <section className="bg-background my-20 relative">
+
+      <div className="container z-10 mx-auto">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
+          viewport={{ once: true }}
+          className="flex flex-col items-center justify-center max-w-[540px] mx-auto"
+        >
+          <div className="flex justify-center">
+            <div className="border py-1 px-4 rounded-lg">Testimonials</div>
+          </div>
+
+          <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bold tracking-tighter mt-5">
+            What our users say
+          </h2>
+          <p className="text-center mt-5 opacity-75">
+            See what our customers have to say about us.
+          </p>
+        </motion.div>
+
+        <div className="flex justify-center gap-6 mt-10 [mask-image:linear-gradient(to_bottom,transparent,black_25%,black_75%,transparent)] max-h-[740px] overflow-hidden">
+          <TestimonialsColumn testimonials={firstColumn} duration={15} />
+          <TestimonialsColumn testimonials={secondColumn} className="hidden md:block" duration={19} />
+          <TestimonialsColumn testimonials={thirdColumn} className="hidden lg:block" duration={17} />
+        </div>
+      </div>
+    </section>
+  );
+};
+
+export default { Testimonials };
+
+\`\`\`
+
+Install NPM dependencies:
+\`\`\`bash
+motion
+\`\`\`
+
+Implementation Guidelines
+ 1. Analyze the component structure and identify all required dependencies
+ 2. Review the component's argumens and state
+ 3. Identify any required context providers or hooks and install them
+ 4. Questions to Ask
+ - What data/props will be passed to this component?
+ - Are there any specific state management requirements?
+ - Are there any required assets (images, icons, etc.)?
+ - What is the expected responsive behavior?
+ - What is the best place to use this component in the app?
+
+Steps to integrate
+ 0. Copy paste all the code above in the correct directories
+ 1. Install external dependencies
+ 2. Fill image assets with Unsplash stock images you know exist
+ 3. Use lucide-react icons for svgs or logos if component requires them
 
 ### Final CTA Section
 

@@ -11,19 +11,58 @@ const DesignSpec = ({ project, onUpdate }) => {
   // Get design data based on project's selected design
   const getDesignData = (designId) => {
     const designs = {
-      'minimalistic': {
-        id: 'minimalistic',
-        name: 'Minimalistic/Modern',
-        image: '/minimlistic.png',
-        description: 'Clean, uncluttered, content-focused',
+      'homerun': {
+        id: 'homerun',
+        name: 'Homerun',
+        image: '/designinspoimages/homerun1.png',
+        description: 'Clean recruitment platform with intuitive candidate flow',
         theme: 'light',
         colors: {
-          background: { hex: '#F9FAFB', name: 'Background', description: 'Light gray background' },
-          foreground: { hex: '#FFFFFF', name: 'Foreground', description: 'Pure white cards' },
-          primaryText: { hex: '#111827', name: 'Primary Text', description: 'Dark charcoal' },
-          secondaryText: { hex: '#6B7280', name: 'Secondary Text', description: 'Medium gray' },
-          borders: { hex: '#E5E7EB', name: 'Borders', description: 'Light gray borders' },
-          accent: { hex: '#10B981', name: 'Primary Accent', description: 'Vibrant green for CTAs' }
+          background: { hex: '#FFFFFF', name: 'Background', description: 'Pure white background' },
+          secondaryBackground: { hex: '#FAFAF7', name: 'Secondary Background', description: 'Light off-white' },
+          primaryBlue: { hex: '#4F75FE', name: 'Primary Blue', description: 'Vibrant blue for CTAs' },
+          primaryGreen: { hex: '#00C275', name: 'Primary Green', description: 'Professional green' },
+          accentPink: { hex: '#F0A8FA', name: 'Accent Pink', description: 'Soft pink accent' },
+          primaryText: { hex: '#2D2323', name: 'Primary Text', description: 'Dark charcoal text' },
+          secondaryText: { hex: '#6B7280', name: 'Secondary Text', description: 'Medium gray text' }
+        },
+        typography: {
+          primary: 'GT America',
+          secondary: 'GT Walsheim',
+          headings: {
+            h1: { size: '48px', weight: '700', spacing: '-0.025em' },
+            h2: { size: '36px', weight: '600', spacing: '-0.025em' },
+            h3: { size: '24px', weight: '500', spacing: '0' }
+          },
+          body: { size: '16px', weight: '400', lineHeight: '1.7' }
+        },
+        spacing: {
+          baseUnit: '8px',
+          sections: '64px',
+          cards: '24px',
+          buttons: '12px 24px'
+        },
+        components: {
+          borderRadius: '8px',
+          shadows: 'subtle layered shadows',
+          buttons: 'rounded-lg with generous padding',
+          cards: 'rounded-xl with 1px borders'
+        }
+      },
+      'cluely': {
+        id: 'cluely',
+        name: 'Cluely',
+        image: '/designinspoimages/cluely1.png',
+        description: 'Elegant analytics dashboard with perfect data visualization',
+        theme: 'light',
+        colors: {
+          background: { hex: '#FFFFFF', name: 'Background', description: 'Pure white background' },
+          gradientStart: { hex: '#E0F2FE', name: 'Gradient Start', description: 'Light blue gradient start' },
+          gradientEnd: { hex: '#DBEAFE', name: 'Gradient End', description: 'Light blue gradient end' },
+          primaryText: { hex: '#18181B', name: 'Primary Text', description: 'Dark zinc text' },
+          secondaryText: { hex: '#71717A', name: 'Secondary Text', description: 'Medium zinc text' },
+          accentBlue: { hex: '#3B82F6', name: 'Accent Blue', description: 'Blue accent color' },
+          border: { hex: '#E4E4E7', name: 'Border', description: 'Light zinc border' }
         },
         typography: {
           primary: 'Inter',
@@ -48,48 +87,275 @@ const DesignSpec = ({ project, onUpdate }) => {
           cards: 'rounded-xl with 1px borders'
         }
       },
-      'tech-dark': {
-        id: 'tech-dark',
-        name: 'Tech Dark Mode',
-        image: '/darkmode.png',
-        description: 'Premium dark-mode tech aesthetic',
-        theme: 'dark',
+      'airbnb': {
+        id: 'airbnb',
+        name: 'Airbnb',
+        image: '/designinspoimages/airbnb1.png',
+        description: 'Warm, welcoming design with seamless booking experience',
+        theme: 'light',
         colors: {
-          background: { hex: '#000000', name: 'Background', description: 'Pure black' },
-          surface: { hex: '#111116', name: 'Surface', description: 'Slightly lighter black' },
-          primaryText: { hex: '#FFFFFF', name: 'Text Primary', description: 'Pure white' },
-          secondaryText: { hex: '#888888', name: 'Text Secondary', description: 'Muted gray' },
-          accent: { hex: '#5865F2', name: 'Electric Blue', description: 'Primary accent' },
-          gradient1: { hex: '#8B5CF6', name: 'Purple', description: 'Gradient accent' },
-          gradient2: { hex: '#FF6B35', name: 'Orange', description: 'Orange glow' },
-          borders: { hex: '#222228', name: 'Borders', description: 'Subtle border' }
+          background: { hex: '#FFFFFF', name: 'Background', description: 'Pure white background' },
+          secondaryBackground: { hex: '#F7F7F7', name: 'Secondary Background', description: 'Light gray background' },
+          primaryRed: { hex: '#FF385C', name: 'Primary Red', description: 'Airbnb brand red' },
+          secondaryRed: { hex: '#E61E4D', name: 'Secondary Red', description: 'Darker red variant' },
+          primaryText: { hex: '#222222', name: 'Primary Text', description: 'Dark text' },
+          secondaryText: { hex: '#717171', name: 'Secondary Text', description: 'Medium gray text' },
+          border: { hex: '#DDDDDD', name: 'Border', description: 'Light gray border' }
         },
         typography: {
-          primary: 'Space Grotesk',
-          secondary: 'Inter',
+          primary: 'Airbnb Cereal VF',
+          secondary: 'Circular',
           headings: {
-            h1: { size: '72px', weight: '600', spacing: '0.02em' },
-            h2: { size: '48px', weight: '600', spacing: '0.02em' },
-            h3: { size: '32px', weight: '500', spacing: '0' }
+            h1: { size: '48px', weight: '700', spacing: '-0.025em' },
+            h2: { size: '36px', weight: '600', spacing: '-0.025em' },
+            h3: { size: '24px', weight: '500', spacing: '0' }
           },
           body: { size: '16px', weight: '400', lineHeight: '1.7' }
         },
         spacing: {
           baseUnit: '8px',
-          sections: '128px',
-          cards: '32px',
-          buttons: '16px 32px'
+          sections: '64px',
+          cards: '24px',
+          buttons: '12px 24px'
         },
         components: {
-          borderRadius: '12px',
-          shadows: 'glow effects and blur',
-          buttons: 'gradient backgrounds with glow',
-          cards: 'floating with backdrop blur'
+          borderRadius: '8px',
+          shadows: 'subtle layered shadows',
+          buttons: 'rounded-lg with generous padding',
+          cards: 'rounded-xl with 1px borders'
+        }
+      },
+      'discord': {
+        id: 'discord',
+        name: 'Discord',
+        image: '/designinspoimages/discord1.png',
+        description: 'Modern communication platform with dark theme aesthetics',
+        theme: 'dark',
+        colors: {
+          background: { hex: '#1A1625', name: 'Background', description: 'Dark purple background' },
+          surface: { hex: '#2B2D31', name: 'Surface', description: 'Lighter dark surface' },
+          primaryText: { hex: '#FFFFFF', name: 'Primary Text', description: 'White text' },
+          secondaryText: { hex: '#B9BBBE', name: 'Secondary Text', description: 'Light gray text' },
+          brandPurple: { hex: '#5865F2', name: 'Brand Purple', description: 'Discord brand purple' },
+          accentBlue: { hex: '#00B0F4', name: 'Accent Blue', description: 'Blue accent' },
+          border: { hex: '#40444B', name: 'Border', description: 'Dark border' }
+        },
+        typography: {
+          primary: 'ABC Ginto Normal',
+          secondary: 'Inter',
+          headings: {
+            h1: { size: '48px', weight: '700', spacing: '-0.025em' },
+            h2: { size: '36px', weight: '600', spacing: '-0.025em' },
+            h3: { size: '24px', weight: '500', spacing: '0' }
+          },
+          body: { size: '16px', weight: '400', lineHeight: '1.7' }
+        },
+        spacing: {
+          baseUnit: '8px',
+          sections: '64px',
+          cards: '24px',
+          buttons: '12px 24px'
+        },
+        components: {
+          borderRadius: '16px',
+          shadows: 'glassmorphic effects',
+          buttons: 'rounded with backdrop blur',
+          cards: 'glassmorphic cards'
+        }
+      },
+      'notion': {
+        id: 'notion',
+        name: 'Notion',
+        image: '/designinspoimages/notion1.png',
+        description: 'Clean productivity interface with minimalist design principles',
+        theme: 'light',
+        colors: {
+          background: { hex: '#FFFFFF', name: 'Background', description: 'Pure white background' },
+          secondaryBackground: { hex: '#F7F6F3', name: 'Secondary Background', description: 'Warm off-white' },
+          primaryText: { hex: '#37352F', name: 'Primary Text', description: 'Dark brown text' },
+          secondaryText: { hex: '#787774', name: 'Secondary Text', description: 'Medium brown text' },
+          accentBlue: { hex: '#2E75CC', name: 'Accent Blue', description: 'Notion blue' },
+          border: { hex: '#E3E2E0', name: 'Border', description: 'Light brown border' },
+          highlight: { hex: '#FBF3DB', name: 'Highlight', description: 'Warm highlight' }
+        },
+        typography: {
+          primary: 'Inter',
+          secondary: 'Inter',
+          headings: {
+            h1: { size: '48px', weight: '700', spacing: '-0.025em' },
+            h2: { size: '36px', weight: '600', spacing: '-0.025em' },
+            h3: { size: '24px', weight: '500', spacing: '0' }
+          },
+          body: { size: '16px', weight: '400', lineHeight: '1.7' }
+        },
+        spacing: {
+          baseUnit: '8px',
+          sections: '64px',
+          cards: '24px',
+          buttons: '12px 24px'
+        },
+        components: {
+          borderRadius: '8px',
+          shadows: 'subtle layered shadows',
+          buttons: 'rounded-lg with generous padding',
+          cards: 'rounded-xl with 1px borders'
+        }
+      },
+      'figma': {
+        id: 'figma',
+        name: 'Figma',
+        image: '/designinspoimages/figma1.png',
+        description: 'Professional design tool interface with collaborative features',
+        theme: 'light',
+        colors: {
+          background: { hex: '#FFFFFF', name: 'Background', description: 'Pure white background' },
+          secondaryBackground: { hex: '#F5F5F5', name: 'Secondary Background', description: 'Light gray background' },
+          primaryText: { hex: '#000000', name: 'Primary Text', description: 'Black text' },
+          secondaryText: { hex: '#333333', name: 'Secondary Text', description: 'Dark gray text' },
+          brandOrange: { hex: '#F24E1E', name: 'Brand Orange', description: 'Figma brand orange' },
+          accentBlue: { hex: '#18A0FB', name: 'Accent Blue', description: 'Blue accent' },
+          border: { hex: '#E5E5E5', name: 'Border', description: 'Light gray border' }
+        },
+        typography: {
+          primary: 'Inter',
+          secondary: 'Inter',
+          headings: {
+            h1: { size: '48px', weight: '700', spacing: '-0.025em' },
+            h2: { size: '36px', weight: '600', spacing: '-0.025em' },
+            h3: { size: '24px', weight: '500', spacing: '0' }
+          },
+          body: { size: '16px', weight: '400', lineHeight: '1.7' }
+        },
+        spacing: {
+          baseUnit: '8px',
+          sections: '64px',
+          cards: '24px',
+          buttons: '12px 24px'
+        },
+        components: {
+          borderRadius: '8px',
+          shadows: 'subtle layered shadows',
+          buttons: 'rounded-lg with generous padding',
+          cards: 'rounded-xl with 1px borders'
+        }
+      },
+      'cursor': {
+        id: 'cursor',
+        name: 'Cursor',
+        image: '/designinspoimages/cursor1.png',
+        description: 'Modern code editor interface with AI-powered features',
+        theme: 'dark',
+        colors: {
+          background: { hex: '#0D1117', name: 'Background', description: 'Dark background' },
+          surface: { hex: '#161B22', name: 'Surface', description: 'Lighter dark surface' },
+          primaryText: { hex: '#F0F6FC', name: 'Primary Text', description: 'Light text' },
+          secondaryText: { hex: '#8B949E', name: 'Secondary Text', description: 'Medium gray text' },
+          accentBlue: { hex: '#58A6FF', name: 'Accent Blue', description: 'Blue accent' },
+          border: { hex: '#30363D', name: 'Border', description: 'Dark border' },
+          highlight: { hex: '#1F6FEB', name: 'Highlight', description: 'Blue highlight' }
+        },
+        typography: {
+          primary: 'Inter',
+          secondary: 'Inter',
+          headings: {
+            h1: { size: '48px', weight: '700', spacing: '-0.025em' },
+            h2: { size: '36px', weight: '600', spacing: '-0.025em' },
+            h3: { size: '24px', weight: '500', spacing: '0' }
+          },
+          body: { size: '16px', weight: '400', lineHeight: '1.7' }
+        },
+        spacing: {
+          baseUnit: '8px',
+          sections: '64px',
+          cards: '24px',
+          buttons: '12px 24px'
+        },
+        components: {
+          borderRadius: '8px',
+          shadows: 'subtle layered shadows',
+          buttons: 'rounded-lg with generous padding',
+          cards: 'rounded-xl with 1px borders'
+        }
+      },
+      'netflix': {
+        id: 'netflix',
+        name: 'Netflix',
+        image: '/designinspoimages/netflix1.png',
+        description: 'Streaming platform with immersive content discovery',
+        theme: 'dark',
+        colors: {
+          background: { hex: '#000000', name: 'Background', description: 'Pure black background' },
+          surface: { hex: '#141414', name: 'Surface', description: 'Dark gray surface' },
+          primaryText: { hex: '#FFFFFF', name: 'Primary Text', description: 'White text' },
+          secondaryText: { hex: '#B3B3B3', name: 'Secondary Text', description: 'Light gray text' },
+          brandRed: { hex: '#E50914', name: 'Brand Red', description: 'Netflix brand red' },
+          accent: { hex: '#564D4D', name: 'Accent', description: 'Dark accent' },
+          border: { hex: '#333333', name: 'Border', description: 'Dark border' }
+        },
+        typography: {
+          primary: 'Inter',
+          secondary: 'Inter',
+          headings: {
+            h1: { size: '48px', weight: '700', spacing: '-0.025em' },
+            h2: { size: '36px', weight: '600', spacing: '-0.025em' },
+            h3: { size: '24px', weight: '500', spacing: '0' }
+          },
+          body: { size: '16px', weight: '400', lineHeight: '1.7' }
+        },
+        spacing: {
+          baseUnit: '8px',
+          sections: '64px',
+          cards: '24px',
+          buttons: '12px 24px'
+        },
+        components: {
+          borderRadius: '8px',
+          shadows: 'subtle layered shadows',
+          buttons: 'rounded-lg with generous padding',
+          cards: 'rounded-xl with 1px borders'
+        }
+      },
+      'jasper-ai': {
+        id: 'jasper-ai',
+        name: 'Jasper AI',
+        image: '/designinspoimages/jasper1.png',
+        description: 'AI-powered content creation platform with modern interface',
+        theme: 'light',
+        colors: {
+          background: { hex: '#FFFFFF', name: 'Background', description: 'Pure white background' },
+          secondaryBackground: { hex: '#F8FAFC', name: 'Secondary Background', description: 'Light slate background' },
+          primaryText: { hex: '#0F172A', name: 'Primary Text', description: 'Dark slate text' },
+          secondaryText: { hex: '#64748B', name: 'Secondary Text', description: 'Medium slate text' },
+          brandGreen: { hex: '#10B981', name: 'Brand Green', description: 'Jasper brand green' },
+          accentBlue: { hex: '#3B82F6', name: 'Accent Blue', description: 'Blue accent' },
+          border: { hex: '#E2E8F0', name: 'Border', description: 'Light slate border' }
+        },
+        typography: {
+          primary: 'Inter',
+          secondary: 'Inter',
+          headings: {
+            h1: { size: '48px', weight: '700', spacing: '-0.025em' },
+            h2: { size: '36px', weight: '600', spacing: '-0.025em' },
+            h3: { size: '24px', weight: '500', spacing: '0' }
+          },
+          body: { size: '16px', weight: '400', lineHeight: '1.7' }
+        },
+        spacing: {
+          baseUnit: '8px',
+          sections: '64px',
+          cards: '24px',
+          buttons: '12px 24px'
+        },
+        components: {
+          borderRadius: '8px',
+          shadows: 'subtle layered shadows',
+          buttons: 'rounded-lg with generous padding',
+          cards: 'rounded-xl with 1px borders'
         }
       }
     };
     
-    return designs[designId] || designs['minimalistic'];
+    return designs[designId] || designs['homerun'];
   };
 
   // Use the actual selectedDesign object from the project if available and valid
@@ -132,7 +398,7 @@ const DesignSpec = ({ project, onUpdate }) => {
       }
     }
     // fallback to static lookup if not present or incomplete
-    const designId = project?.designId || 'minimalistic';
+    const designId = project?.designId || 'homerun';
     return getDesignData(designId);
   };
 

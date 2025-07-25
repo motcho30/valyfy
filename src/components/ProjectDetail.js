@@ -401,45 +401,146 @@ const ProjectOverview = ({ project, generatedFiles, setActiveTab, onOpenModal, o
     
     // Fallback to predefined designs
     const designs = {
-      'minimalistic': {
-        id: 'minimalistic', 
-        name: 'Minimalistic/Modern', 
-        description: 'Clean, uncluttered, content-focused', 
+      'homerun': {
+        id: 'homerun', 
+        name: 'Homerun', 
+        description: 'Clean recruitment platform with intuitive candidate flow', 
         colors: {
-          background: { hex: '#F9FAFB', name: 'Background' }, 
-          foreground: { hex: '#FFFFFF', name: 'Foreground' }, 
-          accent: { hex: '#10B981', name: 'Primary Accent' }, 
-          primaryText: { hex: '#111827', name: 'Primary Text' }
+          background: { hex: '#FFFFFF', name: 'Background' }, 
+          secondaryBackground: { hex: '#FAFAF7', name: 'Secondary Background' }, 
+          primaryBlue: { hex: '#4F75FE', name: 'Primary Blue' }, 
+          primaryGreen: { hex: '#00C275', name: 'Primary Green' }
+        }, 
+        typography: { primary: 'GT America', body: { size: '16px', weight: '400', lineHeight: '1.7' } }, 
+        components: { borderRadius: '8px', shadows: 'subtle layered shadows' }
+      }, 
+      'cluely': {
+        id: 'cluely', 
+        name: 'Cluely', 
+        description: 'Elegant analytics dashboard with perfect data visualization', 
+        colors: {
+          background: { hex: '#FFFFFF', name: 'Background' }, 
+          gradientStart: { hex: '#E0F2FE', name: 'Gradient Start' }, 
+          accentBlue: { hex: '#3B82F6', name: 'Accent Blue' }, 
+          primaryText: { hex: '#18181B', name: 'Primary Text' }
         }, 
         typography: { primary: 'Inter', body: { size: '16px', weight: '400', lineHeight: '1.7' } }, 
         components: { borderRadius: '8px', shadows: 'subtle layered shadows' }
-      }, 
-      'tech-dark': {
-        id: 'tech-dark', 
-        name: 'Tech Dark Mode', 
-        description: 'Premium dark-mode tech aesthetic', 
+      },
+      'airbnb': {
+        id: 'airbnb', 
+        name: 'Airbnb', 
+        description: 'Warm, welcoming design with seamless booking experience', 
+        colors: {
+          background: { hex: '#FFFFFF', name: 'Background' }, 
+          secondaryBackground: { hex: '#F7F7F7', name: 'Secondary Background' }, 
+          primaryRed: { hex: '#FF385C', name: 'Primary Red' }, 
+          primaryText: { hex: '#222222', name: 'Primary Text' }
+        }, 
+        typography: { primary: 'Airbnb Cereal VF', body: { size: '16px', weight: '400', lineHeight: '1.7' } }, 
+        components: { borderRadius: '8px', shadows: 'subtle layered shadows' }
+      },
+      'discord': {
+        id: 'discord', 
+        name: 'Discord', 
+        description: 'Modern communication platform with dark theme aesthetics', 
+        colors: {
+          background: { hex: '#1A1625', name: 'Background' }, 
+          surface: { hex: '#2B2D31', name: 'Surface' }, 
+          brandPurple: { hex: '#5865F2', name: 'Brand Purple' }, 
+          primaryText: { hex: '#FFFFFF', name: 'Primary Text' }
+        }, 
+        typography: { primary: 'ABC Ginto Normal', body: { size: '16px', weight: '400', lineHeight: '1.7' } }, 
+        components: { borderRadius: '16px', shadows: 'glassmorphic effects' }
+      },
+      'notion': {
+        id: 'notion', 
+        name: 'Notion', 
+        description: 'Clean productivity interface with minimalist design principles', 
+        colors: {
+          background: { hex: '#FFFFFF', name: 'Background' }, 
+          secondaryBackground: { hex: '#F7F6F3', name: 'Secondary Background' }, 
+          accentBlue: { hex: '#2E75CC', name: 'Accent Blue' }, 
+          primaryText: { hex: '#37352F', name: 'Primary Text' }
+        }, 
+        typography: { primary: 'Inter', body: { size: '16px', weight: '400', lineHeight: '1.7' } }, 
+        components: { borderRadius: '8px', shadows: 'subtle layered shadows' }
+      },
+      'figma': {
+        id: 'figma', 
+        name: 'Figma', 
+        description: 'Professional design tool interface with collaborative features', 
+        colors: {
+          background: { hex: '#FFFFFF', name: 'Background' }, 
+          secondaryBackground: { hex: '#F5F5F5', name: 'Secondary Background' }, 
+          brandOrange: { hex: '#F24E1E', name: 'Brand Orange' }, 
+          primaryText: { hex: '#000000', name: 'Primary Text' }
+        }, 
+        typography: { primary: 'Inter', body: { size: '16px', weight: '400', lineHeight: '1.7' } }, 
+        components: { borderRadius: '8px', shadows: 'subtle layered shadows' }
+      },
+      'cursor': {
+        id: 'cursor', 
+        name: 'Cursor', 
+        description: 'Modern code editor interface with AI-powered features', 
+        colors: {
+          background: { hex: '#0D1117', name: 'Background' }, 
+          surface: { hex: '#161B22', name: 'Surface' }, 
+          accentBlue: { hex: '#58A6FF', name: 'Accent Blue' }, 
+          primaryText: { hex: '#F0F6FC', name: 'Primary Text' }
+        }, 
+        typography: { primary: 'Inter', body: { size: '16px', weight: '400', lineHeight: '1.7' } }, 
+        components: { borderRadius: '8px', shadows: 'subtle layered shadows' }
+      },
+      'netflix': {
+        id: 'netflix', 
+        name: 'Netflix', 
+        description: 'Streaming platform with immersive content discovery', 
         colors: {
           background: { hex: '#000000', name: 'Background' }, 
-          surface: { hex: '#111116', name: 'Surface' }, 
-          accent: { hex: '#5865F2', name: 'Electric Blue' }, 
-          primaryText: { hex: '#FFFFFF', name: 'Text Primary' }
+          surface: { hex: '#141414', name: 'Surface' }, 
+          brandRed: { hex: '#E50914', name: 'Brand Red' }, 
+          primaryText: { hex: '#FFFFFF', name: 'Primary Text' }
         }, 
-        typography: { primary: 'Space Grotesk', body: { size: '16px', weight: '400', lineHeight: '1.7' } }, 
-        components: { borderRadius: '12px', shadows: 'glow effects and blur' }
+        typography: { primary: 'Inter', body: { size: '16px', weight: '400', lineHeight: '1.7' } }, 
+        components: { borderRadius: '8px', shadows: 'subtle layered shadows' }
+      },
+      'jasper-ai': {
+        id: 'jasper-ai', 
+        name: 'Jasper AI', 
+        description: 'AI-powered content creation platform with modern interface', 
+        colors: {
+          background: { hex: '#FFFFFF', name: 'Background' }, 
+          secondaryBackground: { hex: '#F8FAFC', name: 'Secondary Background' }, 
+          brandGreen: { hex: '#10B981', name: 'Brand Green' }, 
+          primaryText: { hex: '#0F172A', name: 'Primary Text' }
+        }, 
+        typography: { primary: 'Inter', body: { size: '16px', weight: '400', lineHeight: '1.7' } }, 
+        components: { borderRadius: '8px', shadows: 'subtle layered shadows' }
       }
     };
     
-    const designId = project?.designId || 'minimalistic';
-    return designs[designId] || designs['minimalistic'];
+    const designId = project?.designId || 'homerun';
+    return designs[designId] || designs['homerun'];
   };
   const designData = getDesignData();
 
   // Download combined Project Context (Design Spec + PRD)
   const handleDownloadProjectContext = () => {
     try {
-      const designDoc = generateDesignSpecDocument(designData, project.name);
+      // Use the full prompt from the selected design (if available)
+      let fullPrompt = '';
+      if (project.selectedDesign && project.selectedDesign.prompt) {
+        fullPrompt = project.selectedDesign.prompt;
+      } else if (designData && designData.prompt) {
+        fullPrompt = designData.prompt;
+      }
+      // Fallback: show a message if no prompt is found
+      if (!fullPrompt) {
+        fullPrompt = 'No design prompt found for this project.';
+      }
       const prdDoc = generatedFiles.prd || 'PRD not generated yet.';
-      const combined = `# Project Context - ${project.name}\n\n## Design Specification\n\n${designDoc}\n\n---\n\n## Product Requirements Document\n\n${prdDoc}`;
+      const combined = `# Project Context - ${project.name}\n\n## Design Prompt\n\n\n${fullPrompt}\n\n---\n\n## Product Requirements Document\n\n${prdDoc}`;
 
       const blob = new Blob([combined], { type: 'text/markdown' });
       const url = URL.createObjectURL(blob);

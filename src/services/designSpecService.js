@@ -55,32 +55,130 @@ export const generateDesignSpecDocument = (designData, projectName) => {
   }
   // ---------------------------------------------------------------
   const designDescriptions = {
-    'minimalistic': {
-      philosophy: `The Minimalistic/Modern design philosophy centers on the principle that "less is more." This design approach emphasizes clarity, simplicity, and purposeful use of space. Every element serves a function, and visual clutter is eliminated to focus the user's attention on what matters most - the content and core functionality.
+    'homerun': {
+      philosophy: `The Homerun design philosophy centers on creating a clean, professional recruitment platform that prioritizes clarity and user trust. This design approach emphasizes intuitive candidate flow, clear information hierarchy, and a welcoming aesthetic that builds confidence in both recruiters and job seekers.
 
-This design creates a sense of calm and professionalism, making it ideal for applications that require users to focus on tasks, data, or content consumption. The aesthetic communicates reliability, sophistication, and modern sensibilities without being trendy or ephemeral.`,
+The design creates a sense of reliability and professionalism, making it ideal for recruitment and HR applications where trust and clarity are paramount. The aesthetic communicates competence, approachability, and modern business sensibilities.`,
       
-      visualTheme: `The visual theme revolves around a refined monochromatic palette with strategic use of white space. The design feels open and breathable, with a subtle layering system that creates depth without overwhelming the user. Clean lines, consistent spacing, and purposeful typography hierarchy guide the user's eye naturally through the interface.
+      visualTheme: `The visual theme revolves around a clean, spacious layout with a carefully curated color palette featuring vibrant blues and greens. The design feels open and trustworthy, with strategic use of white space and clear visual hierarchy. Professional typography and consistent spacing guide users through the recruitment process naturally.
 
-The overall feeling is one of premium simplicity - sophisticated without being complex, clean without being sterile, and modern without being flashy.`,
+The overall feeling is one of professional warmth - sophisticated yet approachable, clean yet engaging, and modern yet trustworthy.`,
       
-      userExperience: `This design prioritizes user clarity and reduces cognitive load. Users can quickly scan content, understand hierarchy, and complete tasks without visual distractions. The generous spacing and clear typography ensure excellent readability across all devices and screen sizes.`,
+      userExperience: `This design prioritizes user clarity and reduces friction in the recruitment process. Users can quickly understand the platform's value proposition, navigate features intuitively, and complete tasks efficiently. The generous spacing and clear typography ensure excellent readability and accessibility.`,
       
-      brandPersonality: 'Professional, Trustworthy, Modern, Sophisticated, Calm, Focused'
+      brandPersonality: 'Professional, Trustworthy, Approachable, Modern, Reliable, Welcoming'
     },
     
-    'tech-dark': {
-      philosophy: `The Tech Dark Mode design philosophy embraces the cutting-edge aesthetic of modern technology and digital innovation. This approach caters to users who spend extended time on screens, particularly in technical or creative environments where reduced eye strain is crucial.
+    'cluely': {
+      philosophy: `The Cluely design philosophy embraces modern web design principles with a sophisticated, premium aesthetic. This approach leverages subtle gradients, strategic use of negative space, and a refined color palette to create an elegant analytics dashboard experience.
 
-The design communicates innovation, technical expertise, and premium quality. It's inspired by developer tools, gaming interfaces, and high-end software applications. The dark theme creates an immersive environment that allows content and interactive elements to "glow" and stand out dramatically.`,
+The design communicates innovation, precision, and premium quality. It's inspired by modern SaaS applications and data visualization tools. The gradient-heavy design with blue/purple accent colors creates a sense of depth and sophistication.`,
       
-      visualTheme: `The visual theme is built around dramatic contrast and carefully orchestrated lighting effects. Pure blacks create infinite depth, while electric blues and gradient accents provide vibrant focal points. The design feels like looking into a high-tech control center or premium gaming interface.
+      visualTheme: `The visual theme is built around layered gradient backgrounds, glassmorphic effects, and sophisticated color transitions. The design feels like a premium analytics platform with advanced visual effects and smooth animations. Clean typography and generous spacing create breathing room for complex data visualization.
 
-Subtle gradients, glow effects, and carefully placed highlights create a sense of depth and dimensionality. The overall aesthetic is futuristic, premium, and technologically advanced.`,
+The overall aesthetic is modern, sophisticated, and technologically advanced while maintaining excellent usability.`,
       
-      userExperience: `This design creates an immersive, focused environment ideal for extended use sessions. The dark background reduces eye strain in low-light conditions while the strategic use of bright accents ensures important elements remain highly visible. The design appeals to technical users, gamers, and professionals who prefer dark interfaces.`,
+      userExperience: `This design creates an engaging, focused environment ideal for data analysis and business intelligence. The sophisticated visual effects enhance the premium feel while the clear hierarchy ensures users can quickly understand and interact with complex data.`,
       
-      brandPersonality: 'Innovative, Technical, Premium, Modern, Powerful, Immersive'
+      brandPersonality: 'Innovative, Sophisticated, Premium, Modern, Analytical, Professional'
+    },
+    
+    'airbnb': {
+      philosophy: `The Airbnb design philosophy centers on creating warm, welcoming experiences that feel personal and trustworthy. This approach emphasizes human connection, local authenticity, and seamless booking experiences that make users feel confident in their travel decisions.
+
+The design communicates warmth, authenticity, and global community. It's inspired by travel experiences and local cultures, creating a sense of adventure and connection. The minimalist, content-first approach prioritizes clarity and accessibility.`,
+      
+      visualTheme: `The visual theme revolves around clean, geometric layouts with sophisticated use of whitespace and subtle animations. The design feels warm and inviting, with careful attention to micro-interactions and progressive disclosure of information. The brand red color creates focal points while neutral colors provide balance.
+
+The overall aesthetic is modern, trustworthy, and globally accessible while maintaining local authenticity.`,
+      
+      userExperience: `This design prioritizes user confidence and reduces anxiety in travel decisions. Users can quickly browse options, understand pricing, and complete bookings with minimal friction. The mobile-first responsive design ensures excellent experiences across all devices.`,
+      
+      brandPersonality: 'Warm, Authentic, Trustworthy, Global, Welcoming, Adventurous'
+    },
+    
+    'discord': {
+      philosophy: `The Discord design philosophy embraces dark-themed interfaces with playful yet professional aesthetics. This approach combines rounded corners, animated elements, and bold typography to create engaging communication experiences that feel both fun and functional.
+
+The design communicates community, creativity, and modern communication. It's inspired by gaming interfaces and social platforms, creating an immersive environment for digital communities. The dark theme reduces eye strain while vibrant accents create visual interest.`,
+      
+      visualTheme: `The visual theme is built around deep blue-purple gradients, glassmorphic elements, and extensive use of border-radius. The design feels like a modern gaming interface with sophisticated visual effects and smooth animations. High contrast ensures readability while playful elements maintain engagement.
+
+The overall aesthetic is modern, engaging, and community-focused while maintaining professional functionality.`,
+      
+      userExperience: `This design creates an immersive, engaging environment ideal for extended communication sessions. The dark background reduces eye strain while the playful elements maintain user engagement. The design appeals to gamers, creators, and community builders.`,
+      
+      brandPersonality: 'Playful, Community-focused, Modern, Engaging, Creative, Professional'
+    },
+    
+    'notion': {
+      philosophy: `The Notion design philosophy centers on clean productivity interfaces with minimalist design principles. This approach emphasizes clarity, flexibility, and distraction-free work environments that help users focus on their content and workflows.
+
+The design communicates simplicity, productivity, and thoughtful design. It's inspired by clean interfaces and productivity tools, creating a sense of calm and focus. The warm color palette and generous spacing reduce cognitive load.`,
+      
+      visualTheme: `The visual theme revolves around clean lines, warm neutrals, and strategic use of whitespace. The design feels open and uncluttered, with subtle shadows and borders providing structure without distraction. The warm color palette creates a comfortable, approachable feel.
+
+The overall aesthetic is clean, productive, and thoughtfully designed while maintaining excellent usability.`,
+      
+      userExperience: `This design prioritizes user focus and reduces distractions in productivity workflows. Users can quickly organize information, collaborate effectively, and maintain focus on their work. The clean interface supports complex workflows without overwhelming users.`,
+      
+      brandPersonality: 'Clean, Productive, Thoughtful, Minimalist, Focused, Approachable'
+    },
+    
+    'figma': {
+      philosophy: `The Figma design philosophy embraces professional design tool interfaces with collaborative features. This approach emphasizes precision, creativity, and seamless collaboration between designers and stakeholders.
+
+The design communicates professionalism, creativity, and technical excellence. It's inspired by design tools and creative software, creating an environment that supports both individual creativity and team collaboration.`,
+      
+      visualTheme: `The visual theme is built around clean interfaces with strategic use of color and typography. The design feels professional and precise, with clear visual hierarchy and excellent contrast. The brand orange creates focal points while neutral colors provide balance.
+
+The overall aesthetic is professional, creative, and technically excellent while maintaining excellent usability.`,
+      
+      userExperience: `This design prioritizes precision and collaboration in design workflows. Users can quickly access tools, collaborate effectively, and maintain focus on their creative work. The interface supports complex design tasks without overwhelming users.`,
+      
+      brandPersonality: 'Professional, Creative, Precise, Collaborative, Technical, Innovative'
+    },
+    
+    'cursor': {
+      philosophy: `The Cursor design philosophy centers on modern code editor interfaces with AI-powered features. This approach emphasizes developer productivity, intelligent assistance, and seamless coding experiences that feel both powerful and intuitive.
+
+The design communicates technical excellence, innovation, and developer-focused functionality. It's inspired by modern development tools and AI interfaces, creating an environment that enhances coding productivity.`,
+      
+      visualTheme: `The visual theme is built around dark interfaces with strategic use of color for syntax highlighting and AI features. The design feels like a modern development environment with sophisticated visual effects and clear information hierarchy.
+
+The overall aesthetic is technical, innovative, and developer-focused while maintaining excellent usability.`,
+      
+      userExperience: `This design creates a focused, productive environment ideal for extended coding sessions. The dark background reduces eye strain while the intelligent features enhance productivity. The design appeals to developers and technical professionals.`,
+      
+      brandPersonality: 'Technical, Innovative, Productive, Developer-focused, Intelligent, Modern'
+    },
+    
+    'netflix': {
+      philosophy: `The Netflix design philosophy embraces streaming platform interfaces with immersive content discovery. This approach emphasizes entertainment, content exploration, and seamless viewing experiences that keep users engaged and entertained.
+
+The design communicates entertainment, discovery, and premium content experiences. It's inspired by cinematic interfaces and entertainment platforms, creating an immersive environment for content consumption.`,
+      
+      visualTheme: `The visual theme is built around dark interfaces with dramatic content presentation and smooth animations. The design feels like a premium entertainment platform with sophisticated visual effects and engaging interactions.
+
+The overall aesthetic is immersive, entertaining, and content-focused while maintaining excellent usability.`,
+      
+      userExperience: `This design creates an immersive, engaging environment ideal for content discovery and entertainment. The dark background enhances content visibility while the smooth animations maintain user engagement.`,
+      
+      brandPersonality: 'Entertaining, Immersive, Premium, Engaging, Cinematic, Modern'
+    },
+    
+    'jasper-ai': {
+      philosophy: `The Jasper AI design philosophy centers on AI-powered content creation platforms with modern interfaces. This approach emphasizes creativity, productivity, and intelligent assistance that helps users create high-quality content efficiently.
+
+The design communicates innovation, creativity, and AI-powered functionality. It's inspired by modern AI tools and content creation platforms, creating an environment that enhances creative productivity.`,
+      
+      visualTheme: `The visual theme revolves around clean interfaces with strategic use of green accents and modern design elements. The design feels innovative and productive, with clear visual hierarchy and excellent contrast.
+
+The overall aesthetic is modern, creative, and AI-enhanced while maintaining excellent usability.`,
+      
+      userExperience: `This design prioritizes creativity and productivity in content creation workflows. Users can quickly access AI features, create content efficiently, and maintain focus on their creative work.`,
+      
+      brandPersonality: 'Innovative, Creative, Productive, AI-enhanced, Modern, Intelligent'
     }
   };
 
