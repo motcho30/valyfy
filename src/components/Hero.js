@@ -1,6 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import FeatureListSection from './FeatureListSection';
+import FeaturesBentoSection from './FeaturesBentoSection';
 import FAQ from './FAQ';
 import AIToolsSection from './AIToolsSection';
 import AITipsSection from './AITipsSection';
@@ -66,6 +67,9 @@ const Hero = ({ onNavigateToFeature }) => {
         </div>
       </motion.section>
 
+      {/* New Bento Grid Features Section */}
+      <FeaturesBentoSection onNavigateToFeature={onNavigateToFeature} />
+      
       {/* Sticky Scroll Features Section */}
       <FeatureListSection />
       
