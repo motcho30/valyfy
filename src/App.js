@@ -289,29 +289,8 @@ function AppContent() {
         
         console.log('📊 File saving summary: saved', savedFiles.length, 'out of', projectData.generatedFiles.length, 'files');
       
-        // Combine PRD and Design Spec into a single context file
-        if (createdProject.design_data) {
-          try {
-            const designSpecContent = generateDesignSpecDocument(createdProject.design_data, createdProject.name);
-            const prdFile = savedFiles.find(f => f.type === 'PRD Document');
-            
-            if (prdFile) {
-              const prdContent = projectData.generatedFiles.find(f => f.type === 'PRD Document')?.content || '';
-              const combinedContent = `${prdContent}\n\n<hr>\n\n# Design Specification\n\n${designSpecContent}`;
-
-              const updatedFileData = { content: combinedContent };
-              await projectService.updateGeneratedFile(prdFile.id, updatedFileData);
-              console.log('✅ Successfully updated PRD file with design spec.');
-
-              const localPRDFile = projectData.generatedFiles.find(f => f.type === 'PRD Document');
-              if (localPRDFile) {
-                localPRDFile.content = combinedContent;
-              }
-            }
-          } catch (designSpecError) {
-            console.error('❌ Failed to combine design spec into context file:', designSpecError);
-          }
-        }
+        // Note: Design specs are now handled separately in the project context file
+        // PRD content remains pure PRD without design specifications
       } else {
         console.log('💾 No generated files to save');
       }
