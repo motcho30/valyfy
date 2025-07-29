@@ -15,6 +15,7 @@ const FilesGuidance = ({ project, onClose, onComplete }) => {
   const [currentStep, setCurrentStep] = useState(1);
   const [completedSteps, setCompletedSteps] = useState(new Set());
   const [copiedFiles, setCopiedFiles] = useState(new Set());
+  const [showLovableSteps, setShowLovableSteps] = useState(false);
 
   const prdFile = project.generatedFiles?.find(f => f.type === 'PRD Document') || null;
 
@@ -24,6 +25,25 @@ const FilesGuidance = ({ project, onClose, onComplete }) => {
     
     // Get PRD content
     let combinedContent = prdFile.content;
+    
+    // Generate and append design specification if we have design data
+    if (project?.selectedDesign) {
+      try {
+        const designSpecContent = `# Design Specification Document
+## ${project.name}
+
+### Design Theme: ${project.selectedDesign.name}
+${project.selectedDesign.description || ''}
+
+---
+
+${project.selectedDesign.prompt}`;
+        combinedContent += '\n\n' + designSpecContent;
+      } catch (error) {
+        console.error('Error generating design spec:', error);
+        // If design spec generation fails, just use PRD content
+      }
+    }
     
     // Generate cursor rules section based on project type
     const getCursorRulesSection = () => {
@@ -169,18 +189,7 @@ Before writing code for any new feature or component, you must explicitly follow
     // Add cursor rules section
     const cursorRulesSection = getCursorRulesSection();
     if (cursorRulesSection) {
-      combinedContent += '\n\n---\n\n' + cursorRulesSection;
-    }
-    
-    // Generate and append design specification if we have design data
-    if (project?.selectedDesign) {
-      try {
-        const designSpecContent = generateDesignSpecDocument(project.selectedDesign, project.name);
-        combinedContent += '\n\n---\n\n' + designSpecContent;
-      } catch (error) {
-        console.error('Error generating design spec:', error);
-        // If design spec generation fails, just use PRD content
-      }
+      combinedContent += '\n\n' + cursorRulesSection;
     }
     
     return combinedContent;
@@ -285,12 +294,12 @@ Before writing code for any new feature or component, you must explicitly follow
                     <div className="flex items-center bg-white p-3 rounded-xl border border-gray-200/80">
                       <FileText className="w-5 h-5 text-gray-500 mr-4 flex-shrink-0" />
                       <div className="flex-1 text-left">
-                        <h4 className="font-semibold text-sm">PRD Document</h4>
+                        <h4 className="font-semibold text-sm">Project Context File</h4>
                         <p className="text-xs text-gray-500">Combined PRD & Design Specifications</p>
                       </div>
-                      <button onClick={() => handleCopy(getCombinedContent(), 'PRD Document')} className={`flex items-center space-x-2 px-3 py-1.5 rounded-md text-sm font-semibold transition-colors ${copiedFiles.has('PRD Document') ? 'bg-green-100 text-green-700' : 'bg-gray-100 hover:bg-gray-200'}`}>
-                        {copiedFiles.has('PRD Document') ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-                        <span>{copiedFiles.has('PRD Document') ? 'Copied' : 'Copy'}</span>
+                      <button onClick={() => handleCopy(getCombinedContent(), 'Project Context File')} className={`flex items-center space-x-2 px-3 py-1.5 rounded-md text-sm font-semibold transition-colors ${copiedFiles.has('Project Context File') ? 'bg-green-100 text-green-700' : 'bg-gray-100 hover:bg-gray-200'}`}>
+                        {copiedFiles.has('Project Context File') ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                        <span>{copiedFiles.has('Project Context File') ? 'Copied' : 'Copy'}</span>
                       </button>
                     </div>
                   )}
@@ -312,30 +321,79 @@ Before writing code for any new feature or component, you must explicitly follow
                   <p className="text-lg text-gray-500">Follow these steps to add your files to Cursor.</p>
                 </div>
                 
-                <div className="bg-gray-50 rounded-2xl p-6 border border-gray-100">
-                  <div className="flex flex-col md:flex-row items-start md:items-center gap-6">
-                    <div className="text-left space-y-4 flex-1">
-                      {[
-                        { title: 'Open Cursor Settings', description: 'Go to Cursor Settings → Rules' },
-                        { title: 'Add new project rules file', description: 'Click "Add new project rules file"' },
-                        { title: 'Create PRD file', description: 'Name it "prd" and paste the copied content' },
-                      ].map((item, index) => (
-                        <div key={index} className="flex items-start space-x-3">
-                          <div className="w-6 h-6 bg-black rounded-full flex items-center justify-center flex-shrink-0 mt-1">
-                            <span className="text-white font-semibold text-xs">{index + 1}</span>
+                {!showLovableSteps ? (
+                  <div className="bg-gray-50 rounded-2xl p-6 border border-gray-100">
+                    <div className="flex flex-col md:flex-row items-start md:items-center gap-6">
+                      <div className="text-left space-y-4 flex-1">
+                        {[
+                          { title: 'Open Cursor Settings', description: 'Go to Cursor Settings → Rules' },
+                          { title: 'Add new project rules file', description: 'Click "Add new project rules file"' },
+                          { title: 'Create PRD file', description: 'Name it "prd" and paste the copied content' },
+                        ].map((item, index) => (
+                          <div key={index} className="flex items-start space-x-3">
+                            <div className="w-6 h-6 bg-black rounded-full flex items-center justify-center flex-shrink-0 mt-1">
+                              <span className="text-white font-semibold text-xs">{index + 1}</span>
+                            </div>
+                            <div>
+                              <h4 className="font-semibold text-sm text-black">{item.title}</h4>
+                              <p className="text-sm text-gray-500">{item.description}</p>
+                            </div>
                           </div>
-                          <div>
-                            <h4 className="font-semibold text-sm text-black">{item.title}</h4>
-                            <p className="text-sm text-gray-500">{item.description}</p>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
+                        ))}
+                      </div>
 
-                    <div className="w-full md:w-2/3 aspect-video bg-black rounded-lg overflow-hidden border border-gray-200 self-center">
-                      <video src="/addingfile.mov" autoPlay loop muted playsInline className="w-full h-full object-cover" />
+                      <div className="w-full md:w-2/3 aspect-video bg-black rounded-lg overflow-hidden border border-gray-200 self-center">
+                        <video src="/addingfile.mov" autoPlay loop muted playsInline className="w-full h-full object-cover" />
+                      </div>
                     </div>
                   </div>
+                ) : (
+                  <div className="bg-gray-50 rounded-2xl p-6 border border-gray-100">
+                    <div className="flex flex-col md:flex-row items-start md:items-center gap-6">
+                      <div className="text-left space-y-4 flex-1">
+                        {[
+                          { title: 'Go to Lovable', description: 'Open Lovable in your browser' },
+                          { title: 'Paste your prompt', description: 'Paste the copied project context into Lovable\'s interface' },
+                          { title: 'Start building', description: 'Let Lovable generate your webapp' },
+                        ].map((item, index) => (
+                          <div key={index} className="flex items-start space-x-3">
+                            <div className="w-6 h-6 bg-pink-600 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
+                              <span className="text-white font-semibold text-xs">{index + 1}</span>
+                            </div>
+                            <div>
+                              <h4 className="font-semibold text-sm text-black">{item.title}</h4>
+                              <p className="text-sm text-gray-500">{item.description}</p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+
+                      <div className="w-full md:w-2/3 aspect-video bg-black rounded-lg overflow-hidden border border-gray-200 self-center">
+                        <div className="w-full h-full flex items-center justify-center text-white text-lg">
+                          <p>Lovable video coming soon...</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                <div className="text-center">
+                  <button 
+                    onClick={() => setShowLovableSteps(!showLovableSteps)}
+                    className="inline-flex items-center space-x-2 px-4 py-2 bg-white border-2 border-gray-200 rounded-xl text-gray-700 font-semibold hover:bg-gray-50 hover:border-gray-300 transition-all duration-200"
+                  >
+                    {!showLovableSteps ? (
+                      <>
+                        <span>Are you using Lovable?</span>
+                        <span className="text-pink-600">Click here for Lovable instructions</span>
+                      </>
+                    ) : (
+                      <>
+                        <span>Are you using Cursor?</span>
+                        <span className="text-blue-600">Click here for Cursor instructions</span>
+                      </>
+                    )}
+                  </button>
                 </div>
 
                 <div className="flex justify-between items-center pt-2">
