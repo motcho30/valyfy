@@ -973,7 +973,7 @@ ${project.selectedDesign.prompt}`;
         {/* AI Tools Section */}
         <div className="mb-12">
           <h2 className="text-2xl font-bold text-gray-900 mb-8">Ready to use prompts to build your app using:</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             
             {/* Lovable Card */}
             <div className="group bg-white rounded-2xl border border-slate-200/70 p-6 flex flex-col items-center justify-start text-center relative hover:shadow-lg hover:-translate-y-1 transition-all duration-200" style={{ minHeight: '280px' }}>
@@ -1110,6 +1110,66 @@ ${project.selectedDesign.prompt}`;
                 </button>
               </div>
             </div>
+
+            {/* ChatGPT 5 Card */}
+            <div className="group bg-white rounded-2xl border border-slate-200/70 p-6 flex flex-col items-center justify-start text-center relative hover:shadow-lg hover:-translate-y-1 transition-all duration-200" style={{ minHeight: '280px' }}>
+              <div className="w-16 h-16 mb-4 flex items-center justify-center">
+                <img 
+                  src="/aitoolslogos/chatgptlogo.png" 
+                  alt="ChatGPT 5 logo"
+                  className="max-w-full max-h-full object-contain"
+                />
+              </div>
+              <h3 className="font-semibold text-slate-800 text-lg mb-2">ChatGPT 5</h3>
+              <p className="text-sm text-slate-500 mb-6 flex-grow">
+                Use ChatGPT 5 to build your webapp with powerful AI coding assistance
+              </p>
+              <div className="space-y-3 w-full">
+                <button 
+                  onClick={async () => {
+                    try {
+                      // Get project context content
+                      const prdFile = project.generatedFiles?.find(f => f.type === 'PRD Document');
+                      const prdContent = prdFile?.content || 'PRD not generated yet.';
+                      
+                      let designSpecContent = '';
+                      if (project?.selectedDesign?.prompt) {
+                        designSpecContent = `# Design Specification Document\n## ${project.name}\n\n### Design Theme: ${project.selectedDesign.name}\n${project.selectedDesign.description || ''}\n\n---\n\n${project.selectedDesign.prompt}`;
+                      }
+                      
+                      let combinedContent = prdContent;
+                      
+                      if (designSpecContent) {
+                        combinedContent += '\n\n' + designSpecContent;
+                      }
+                      
+                      combinedContent += '\n\n' + getCursorRulesContent();
+                      
+                      // GPT-5 prompt
+                      const gpt5Prompt = `Building me the following webapp using the PRD and design specs provided:\n\n${combinedContent}`;
+                      
+                      await navigator.clipboard.writeText(gpt5Prompt);
+                      showCopyFeedback('gpt5');
+                    } catch (error) {
+                      console.error('Failed to copy to clipboard:', error);
+                    }
+                  }}
+                  className={`w-full font-semibold py-3 px-4 rounded-xl transition-all duration-200 ${
+                    copyFeedback.gpt5 
+                      ? 'bg-green-600 text-white' 
+                      : 'bg-slate-900 text-white hover:bg-slate-800'
+                  }`}
+                >
+                  {copyFeedback.gpt5 ? '✓ Copied!' : 'Copy Prompt'}
+                </button>
+                <button 
+                  onClick={() => setShowUsageModal('gpt5')}
+                  className="w-full bg-white border border-slate-200 text-slate-700 font-semibold py-2 px-4 rounded-xl hover:bg-slate-50 hover:border-slate-300 transition-all duration-200 text-sm"
+                >
+                  How do I use this prompt in ChatGPT 5?
+                </button>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -1119,7 +1179,7 @@ ${project.selectedDesign.prompt}`;
             <div className="bg-white rounded-2xl p-8 max-w-md w-full mx-4 shadow-xl">
               <div className="flex items-center justify-between mb-6">
                 <h3 className="text-xl font-bold text-gray-900">
-                  How to use with {showUsageModal === 'cursor' ? 'Cursor' : 'Lovable'}
+                  How to use with {showUsageModal === 'cursor' ? 'Cursor' : showUsageModal === 'lovable' ? 'Lovable' : 'ChatGPT 5'}
                 </h3>
                 <button 
                   onClick={() => setShowUsageModal(null)}
@@ -1175,7 +1235,7 @@ ${project.selectedDesign.prompt}`;
                     </div>
                   </div>
                 </div>
-              ) : (
+              ) : showUsageModal === 'lovable' ? (
                 <div className="space-y-4">
                   <div className="flex items-start space-x-3">
                     <div className="w-6 h-6 bg-pink-600 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
@@ -1212,6 +1272,46 @@ ${project.selectedDesign.prompt}`;
                     <div className="flex-1">
                       <h4 className="font-semibold text-sm text-gray-900">Start building</h4>
                       <p className="text-sm text-gray-600">Let Lovable generate your webapp</p>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <div className="flex items-start space-x-3">
+                    <div className="w-6 h-6 bg-gray-800 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
+                      <span className="text-white font-semibold text-xs">1</span>
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-center space-x-2">
+                        <h4 className="font-semibold text-sm text-gray-900">Go to ChatGPT</h4>
+                        <button 
+                          onClick={() => window.open('https://chat.openai.com', '_blank')}
+                          className="text-gray-400 hover:text-gray-600 transition-colors"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                          </svg>
+                        </button>
+                      </div>
+                      <p className="text-sm text-gray-600">Open ChatGPT in your browser</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start space-x-3">
+                    <div className="w-6 h-6 bg-gray-800 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
+                      <span className="text-white font-semibold text-xs">2</span>
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="font-semibold text-sm text-gray-900">Paste your prompt</h4>
+                      <p className="text-sm text-gray-600">Paste the copied prompt into the chat and send it</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start space-x-3">
+                    <div className="w-6 h-6 bg-gray-800 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
+                      <span className="text-white font-semibold text-xs">3</span>
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="font-semibold text-sm text-gray-900">Iterate</h4>
+                      <p className="text-sm text-gray-600">Ask ChatGPT 5 to generate files and iterate as needed</p>
                     </div>
                   </div>
                 </div>
