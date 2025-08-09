@@ -66,7 +66,7 @@ const Gpt5PromptGeneratorSection = () => {
     const trimmedIdea = ideaText?.trim();
     const ideaLine = trimmedIdea ? `App idea: ${trimmedIdea}\n\n` : '';
     return (
-      `Build me this app following this PRD:\n\n` +
+      `Here is a PRD breakdown of an app I want to build. Follow this PRD and build the app in the Canvas tool:\n\n` +
       ideaLine +
       `PRD (markdown):\n` +
       `------------------------------\n` +
