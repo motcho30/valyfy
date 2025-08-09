@@ -123,6 +123,9 @@ serve(async (req) => {
           if (requestBody.context === 'project-creation') {
             return `${origin}/create-project?payment=success&session_id={CHECKOUT_SESSION_ID}`
           }
+          if (requestBody.context === 'prd-starter') {
+            return `${origin}/?payment=success&session_id={CHECKOUT_SESSION_ID}&redirect=/#prd-starter`;
+          }
           if (requestBody.context === 'gpt5-prd-generator') {
             return `${origin}/?payment=success&session_id={CHECKOUT_SESSION_ID}&redirect=/#gpt5-prd`;
           }
@@ -132,6 +135,9 @@ serve(async (req) => {
           const origin = req.headers.get('origin');
           if (requestBody.context === 'project-creation') {
             return `${origin}/create-project?payment=cancelled`;
+          }
+          if (requestBody.context === 'prd-starter') {
+            return `${origin}/?payment=cancelled&redirect=/#prd-starter`;
           }
           if (requestBody.context === 'gpt5-prd-generator') {
             return `${origin}/?payment=cancelled&redirect=/#gpt5-prd`;

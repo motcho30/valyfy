@@ -5,6 +5,8 @@ import { useAuth } from '../contexts/AuthContext';
 import { generatePRD } from '../services/prdGeneratorService';
 import { downloadFormats, extractAppName } from '../services/downloadService';
 import { projectService } from '../services/projectService';
+import { usePayment } from '../contexts/PaymentContext';
+import PaymentModal from './PaymentModal';
 
 const PRDStarter = ({ onAuthRequired }) => {
   const [appIdea, setAppIdea] = useState('');
@@ -15,7 +17,30 @@ const PRDStarter = ({ onAuthRequired }) => {
   const [showFormatDropdown, setShowFormatDropdown] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
   const { user, isAuthenticated } = useAuth();
+  const { isPaymentRequired } = usePayment();
   const dropdownRef = useRef(null);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+
+  // Restore buffered state after Stripe redirect so the PRD remains available
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem('prd_starter_buffer');
+      if (stored) {
+        const { appIdea: savedIdea, generatedPRD: savedPRD, selectedFormat: savedFmt } = JSON.parse(stored);
+        if (savedIdea) setAppIdea(savedIdea);
+        if (savedPRD) {
+          setGeneratedPRD(savedPRD);
+          setShowDownload(true);
+        }
+        if (savedFmt) setSelectedFormat(savedFmt);
+        localStorage.removeItem('prd_starter_buffer');
+        const el = document.getElementById('prd-starter');
+        if (el) el.scrollIntoView({ behavior: 'smooth' });
+      }
+    } catch (e) {
+      // ignore
+    }
+  }, []);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -63,6 +88,20 @@ const PRDStarter = ({ onAuthRequired }) => {
   const handleDownload = async () => {
     if (!user) {
       onAuthRequired?.();
+      return;
+    }
+
+    // If user hasn't paid yet, open payment modal and persist buffer
+    if (isPaymentRequired) {
+      try {
+        localStorage.setItem('prd_starter_buffer', JSON.stringify({
+          appIdea,
+          generatedPRD,
+          selectedFormat,
+          ts: Date.now()
+        }));
+      } catch (e) {}
+      setShowPaymentModal(true);
       return;
     }
 
@@ -142,7 +181,7 @@ const PRDStarter = ({ onAuthRequired }) => {
   const selectedFormatOption = formatOptions.find(option => option.value === selectedFormat);
 
   return (
-    <div className="w-full bg-white rounded-2xl shadow-lg overflow-visible" style={{ minHeight: '600px' }}>
+    <div id="prd-starter" className="w-full bg-white rounded-2xl shadow-lg overflow-visible" style={{ minHeight: '600px' }}>
         <div className="p-10 flex flex-col h-full">
           {/* Header */}
           <div className="text-center mb-8">
@@ -308,6 +347,22 @@ const PRDStarter = ({ onAuthRequired }) => {
             </motion.div>
           )}
         </form>
+        {/* Payment Modal for unlocking downloads */}
+        <PaymentModal
+          isOpen={showPaymentModal}
+          onClose={() => setShowPaymentModal(false)}
+          onPaymentInitiated={() => {
+            try {
+              localStorage.setItem('prd_starter_buffer', JSON.stringify({
+                appIdea,
+                generatedPRD,
+                selectedFormat,
+                ts: Date.now()
+              }));
+            } catch (e) {}
+          }}
+          context="prd-starter"
+        />
       </div>
     </div>
   );
