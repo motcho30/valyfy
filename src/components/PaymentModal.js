@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { usePayment } from '../contexts/PaymentContext';
 
-const PaymentModal = ({ isOpen, onClose, onPaymentInitiated }) => {
+const PaymentModal = ({ isOpen, onClose, onPaymentInitiated, context = 'design-inspiration' }) => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState(null);
   const { initiatePayment } = usePayment();
@@ -17,7 +17,7 @@ const PaymentModal = ({ isOpen, onClose, onPaymentInitiated }) => {
         onPaymentInitiated();
       }
       
-      await initiatePayment();
+      await initiatePayment(context);
       // The payment service will redirect to Stripe Checkout
       // so we don't need to do anything else here
       
@@ -68,7 +68,7 @@ const PaymentModal = ({ isOpen, onClose, onPaymentInitiated }) => {
               </svg>
             </div>
             <h2 className="text-xl font-semibold text-gray-900 mb-2">
-              Unlock All Prompts
+              Unlock Prompt Access
             </h2>
             <p className="text-sm text-gray-500 leading-relaxed">
               Get instant access to all design inspiration prompts from top companies
@@ -89,11 +89,11 @@ const PaymentModal = ({ isOpen, onClose, onPaymentInitiated }) => {
           {/* Features */}
           <div className="px-6 mb-6">
             <div className="space-y-2">
-              {[
-                'All design inspiration prompts',
-                'Airbnb, Discord, Notion & more',
+               {[
+                'Copy any generated prompt',
+                'One-time payment, lifetime access',
                 'Secure payment via Stripe'
-              ].map((feature, index) => (
+               ].map((feature, index) => (
                 <div key={index} className="flex items-center text-sm text-gray-600">
                   <div className="w-1.5 h-1.5 bg-green-500 rounded-full mr-3 flex-shrink-0"></div>
                   {feature}
@@ -127,7 +127,7 @@ const PaymentModal = ({ isOpen, onClose, onPaymentInitiated }) => {
                   Redirecting to Stripe...
                 </>
               ) : (
-                'Unlock for £5'
+                'Pay £5 to unlock'
               )}
             </button>
 

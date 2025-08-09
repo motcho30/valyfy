@@ -3,6 +3,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { generatePRD } from '../services/prdGeneratorService';
 import { useAuth } from '../contexts/AuthContext';
 import Auth from './Auth';
+import { usePayment } from '../contexts/PaymentContext';
+import PaymentModal from './PaymentModal';
 
 const Gpt5PromptGeneratorSection = () => {
   const [idea, setIdea] = useState('');
@@ -11,7 +13,36 @@ const Gpt5PromptGeneratorSection = () => {
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState(null);
   const { isAuthenticated } = useAuth();
+  const { hasAccess, isPaymentRequired, initiatePayment } = usePayment();
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  
+  // Restore buffer after payment redirect
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem('gpt5_prd_generator_buffer');
+      if (stored) {
+        const { idea: savedIdea, prompt: savedPrompt } = JSON.parse(stored);
+        if (savedIdea) setIdea(savedIdea);
+        if (savedPrompt) setPrompt(savedPrompt);
+        localStorage.removeItem('gpt5_prd_generator_buffer');
+        // Scroll into view if navigated back with hash
+        if (document && document.getElementById('gpt5-prd')) {
+          document.getElementById('gpt5-prd').scrollIntoView({ behavior: 'smooth' });
+        }
+      }
+    } catch (e) {
+      // ignore
+    }
+  }, []);
+
+  const saveBufferForPayment = () => {
+    try {
+      localStorage.setItem('gpt5_prd_generator_buffer', JSON.stringify({ idea, prompt, ts: Date.now() }));
+    } catch (e) {
+      // ignore
+    }
+  };
 
   // Dynamic loading messages while generating
   const loadingMessages = useMemo(() => [
@@ -68,7 +99,7 @@ const Gpt5PromptGeneratorSection = () => {
   };
 
   return (
-    <section className="px-4 py-16 md:py-24 bg-gradient-to-b from-white to-slate-50 border-t border-slate-100">
+    <section id="gpt5-prd" className="px-4 py-16 md:py-24 bg-gradient-to-b from-white to-slate-50 border-t border-slate-100">
       <div className="max-w-5xl mx-auto">
         {/* New tag + Title */}
         <div className="flex items-center justify-center mb-6">
@@ -117,10 +148,22 @@ const Gpt5PromptGeneratorSection = () => {
               <div className="text-sm font-medium text-slate-700">Generated build prompt</div>
               <div className="flex items-center gap-2">
                 <button
-                  onClick={handleCopy}
-                  disabled={!prompt || (!isAuthenticated && !isGenerating && !error)}
+                  onClick={() => {
+                    if (!prompt) return;
+                    if (!isAuthenticated) {
+                      setShowAuthModal(true);
+                      return;
+                    }
+                    if (isPaymentRequired) {
+                      saveBufferForPayment();
+                      setShowPaymentModal(true);
+                      return;
+                    }
+                    handleCopy();
+                  }}
+                  disabled={!prompt}
                   className={`text-sm px-3 py-1.5 rounded-lg border ${
-                    prompt && (isAuthenticated || isGenerating || error)
+                    prompt
                       ? 'border-slate-300 hover:bg-slate-50'
                       : 'border-slate-200 text-slate-400 cursor-not-allowed'
                   }`}
@@ -129,7 +172,7 @@ const Gpt5PromptGeneratorSection = () => {
                 </button>
               </div>
             </div>
-            <div className={`p-4 max-h-96 ${(!isAuthenticated && !isGenerating && !error && prompt) ? 'overflow-hidden' : 'overflow-auto'} relative`}>
+            <div className={`p-4 max-h-96 ${(!isAuthenticated || isPaymentRequired) && !isGenerating && !error && prompt ? 'overflow-hidden' : 'overflow-auto'} relative`}>
               {error ? (
                 <p className="text-sm text-red-600">{error}</p>
               ) : (
@@ -139,16 +182,30 @@ const Gpt5PromptGeneratorSection = () => {
               )}
               {/* Content overlay is moved to the card root to cover header, copy button, and content */}
             </div>
-            {!isGenerating && !error && prompt && !isAuthenticated && (
+            {!isGenerating && !error && prompt && (!isAuthenticated || isPaymentRequired) && (
               <div className="absolute inset-0 backdrop-blur-sm bg-white/60 flex items-center justify-center rounded-2xl">
-                <div className="text-center px-6">
-                  <p className="text-sm text-slate-700 mb-3">Create a free account to copy this build prompt</p>
-                  <button
-                    onClick={() => setShowAuthModal(true)}
-                    className="px-4 py-2 rounded-lg bg-black text-white text-sm hover:bg-black/90"
-                  >
-                    Sign up to Copy
-                  </button>
+                <div className="text-center px-6 space-y-3">
+                  {!isAuthenticated ? (
+                    <>
+                      <p className="text-sm text-slate-700">Create a free account to continue</p>
+                      <button
+                        onClick={() => setShowAuthModal(true)}
+                        className="px-4 py-2 rounded-lg bg-black text-white text-sm hover:bg-black/90"
+                      >
+                        Sign up to Continue
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <p className="text-sm text-slate-700">Unlock this prompt with a one-time payment</p>
+                      <button
+                        onClick={() => { saveBufferForPayment(); setShowPaymentModal(true); }}
+                        className="px-4 py-2 rounded-lg bg-black text-white text-sm hover:bg-black/90"
+                      >
+                        Unlock prompt
+                      </button>
+                    </>
+                  )}
                 </div>
               </div>
             )}
@@ -176,9 +233,8 @@ const Gpt5PromptGeneratorSection = () => {
                 onClose={() => {
                   setShowAuthModal(false);
                   setTimeout(() => {
-                    if (prompt) {
-                      navigator.clipboard.writeText(prompt).catch(() => {});
-                    }
+                    // After auth, if payment is required, open payment modal
+                    if (isPaymentRequired) setShowPaymentModal(true);
                   }, 100);
                 }}
                 defaultMode="signup"
@@ -187,6 +243,15 @@ const Gpt5PromptGeneratorSection = () => {
           </motion.div>
         )}
       </AnimatePresence>
+      {/* Payment Modal */}
+      <PaymentModal
+        isOpen={showPaymentModal}
+        onClose={() => setShowPaymentModal(false)}
+        onPaymentInitiated={() => {
+          saveBufferForPayment();
+        }}
+        context="gpt5-prd-generator"
+      />
     </section>
   );
 };

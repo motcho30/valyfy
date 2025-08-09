@@ -118,12 +118,26 @@ serve(async (req) => {
         mode: 'payment',
         client_reference_id: user.id,
         customer_email: user.email,
-        success_url: requestBody.context === 'project-creation' 
-          ? `${req.headers.get('origin')}/create-project?payment=success&session_id={CHECKOUT_SESSION_ID}`
-          : `${req.headers.get('origin')}/?payment=success&session_id={CHECKOUT_SESSION_ID}#design-inspiration`,
-        cancel_url: requestBody.context === 'project-creation'
-          ? `${req.headers.get('origin')}/create-project?payment=cancelled`
-          : `${req.headers.get('origin')}/?payment=cancelled#design-inspiration`,
+        success_url: (() => {
+          const origin = req.headers.get('origin');
+          if (requestBody.context === 'project-creation') {
+            return `${origin}/create-project?payment=success&session_id={CHECKOUT_SESSION_ID}`
+          }
+          if (requestBody.context === 'gpt5-prd-generator') {
+            return `${origin}/?payment=success&session_id={CHECKOUT_SESSION_ID}&redirect=/#gpt5-prd`;
+          }
+          return `${origin}/?payment=success&session_id={CHECKOUT_SESSION_ID}#design-inspiration`;
+        })(),
+        cancel_url: (() => {
+          const origin = req.headers.get('origin');
+          if (requestBody.context === 'project-creation') {
+            return `${origin}/create-project?payment=cancelled`;
+          }
+          if (requestBody.context === 'gpt5-prd-generator') {
+            return `${origin}/?payment=cancelled&redirect=/#gpt5-prd`;
+          }
+          return `${origin}/?payment=cancelled#design-inspiration`;
+        })(),
         metadata: {
           user_id: user.id,
           user_email: user.email || '',
