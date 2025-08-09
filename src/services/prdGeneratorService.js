@@ -9,7 +9,7 @@ const buildPRDPrompt = (appIdea, selectedFeatures, selectedDesign, uiSection) =>
          `## Selected Features\n${selectedFeatures.join(', ')}\n\n`+
          `## Design System\n${selectedDesign?.name || 'Modern Minimalistic'}\n\n`+
          (uiSection || '') +
-         `\n## PRD Sections\n1. Problem Statement\n2. Target Users & Personas\n3. Functional Requirements (with MoSCoW)\n4. Data Model / Schema\n5. Platform Pages\n6. User Stories & Flows\n7. Success Metrics & KPIs\n8. Scope & MVP Definition\n9. Competitive Landscape\n\nReturn the full PRD.`;
+         `\n## PRD Sections\n1. Problem Statement\n2. Target Users & Personas\n3. Functional Requirements (with MoSCoW)\n4. Data Model / Schema\n5. Platform Pages\n6. User Stories & Flows\n\nReturn the full PRD.`;
 };
 
 export const generatePRD = async (appIdea, selectedFeatures, selectedDesign, onProgress) => {
