@@ -5,10 +5,10 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../services/supabase'
 
-const Auth = ({ onClose, redirectTo }) => {
+const Auth = ({ onClose, redirectTo, defaultMode = 'signin' }) => {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
-  const [isSignUp, setIsSignUp] = useState(false)
+  const [isSignUp, setIsSignUp] = useState(defaultMode === 'signup')
   
   // Get redirect destination from props or URL params
   const getRedirectPath = () => {

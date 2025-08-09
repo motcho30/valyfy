@@ -5,6 +5,7 @@ import FeaturesBentoSection from './FeaturesBentoSection';
 import FAQ from './FAQ';
 import AIToolsSection from './AIToolsSection';
 import AITipsSection from './AITipsSection';
+import Gpt5PromptGeneratorSection from './Gpt5PromptGeneratorSection';
 
 const Hero = ({ onNavigateToFeature }) => {
   return (
@@ -34,7 +35,7 @@ const Hero = ({ onNavigateToFeature }) => {
           All-in-one<br />vibe coding toolkit
           </h1>
           <p className="text-xl md:text-2xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
-            Everything you need to launch your next app—organised, streamlined, and ready to go.
+            Transform your ideas into high-quality apps with AI. From concept to deployment—build faster, ship smarter.
           </p>
           
           <motion.div 
@@ -66,6 +67,9 @@ const Hero = ({ onNavigateToFeature }) => {
           </motion.div>
         </div>
       </motion.section>
+
+      {/* GPT-5 PRD Prompt Generator Section */}
+      <Gpt5PromptGeneratorSection />
 
       {/* New Bento Grid Features Section */}
       <FeaturesBentoSection onNavigateToFeature={onNavigateToFeature} />
