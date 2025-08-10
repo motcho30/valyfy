@@ -11,7 +11,7 @@ const FeatureListSection = () => {
   const features = [
     {
       title: "AI Co-Founder Mode",
-      description: "Just tell us what you wanna build and we'll turn your scattered thoughts into a clear plan that AI actually understands. Optimized for optimized for cursor, lovable, and whatever comes next.",
+      description: "Just tell us what you wanna build and we'll turn your scattered thoughts into a clear plan that AI actually understands. Optimized for cursor, lovable, and whatever comes next.",
       demo: <PRDStarter onAuthRequired={() => setShowAuth(true)} />,
     },
     {
@@ -21,7 +21,7 @@ const FeatureListSection = () => {
     },
     {
       title: "Instant Project Foundation",
-      description: "Generate custom cursor.config rules, PRDs, and design specs tailored to your exact stack. Skip the boring setup, and jump straight to building.",
+      description: "Download professionally crafted cursor.config rules, PRDs, and design specs for web and mobile development. Skip the boring setup, and jump straight to building.",
       demo: <ProjectStarterKit />,
     },
   ];

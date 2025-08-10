@@ -1,6 +1,6 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { generatePRD } from '../services/prdGeneratorService';
+import { generatePRDForGPT5 } from '../services/prdGeneratorService';
 import { useAuth } from '../contexts/AuthContext';
 import Auth from './Auth';
 import { usePayment } from '../contexts/PaymentContext';
@@ -80,7 +80,7 @@ const Gpt5PromptGeneratorSection = () => {
     setError(null);
     setPrompt('');
     try {
-      const prd = await generatePRD(idea.trim(), [], null, (partial) => {
+      const prd = await generatePRDForGPT5(idea.trim(), (partial) => {
         setPrompt(wrapPrdAsBuildPrompt(partial, idea));
       });
       setPrompt(wrapPrdAsBuildPrompt(prd, idea));
@@ -103,8 +103,39 @@ const Gpt5PromptGeneratorSection = () => {
       <div className="max-w-5xl mx-auto">
         {/* New tag + Title */}
         <div className="flex items-center justify-center mb-6">
-          <span className="text-xs font-semibold uppercase tracking-wider bg-black text-white px-3 py-1 rounded-full mr-3">New</span>
-          <span className="text-xs font-semibold uppercase tracking-wider text-black/60">GPT-5</span>
+          <motion.span 
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+            whileHover={{ scale: 1.05 }}
+            className="relative text-xs font-bold uppercase tracking-wider bg-gradient-to-r from-black to-gray-800 text-white px-4 py-1.5 rounded-full mr-3 shadow-lg"
+          >
+            <motion.div
+              animate={{ 
+                boxShadow: [
+                  "0 0 0 0 rgba(0, 0, 0, 0.3)",
+                  "0 0 0 4px rgba(0, 0, 0, 0.1)",
+                  "0 0 0 0 rgba(0, 0, 0, 0)"
+                ]
+              }}
+              transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+              className="absolute inset-0 rounded-full"
+            />
+            <span className="relative z-10">New</span>
+            <motion.div 
+              animate={{ opacity: [0.5, 1, 0.5] }}
+              transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
+              className="absolute -top-1 -right-1 w-2 h-2 bg-green-400 rounded-full"
+            />
+          </motion.span>
+          <motion.span 
+            initial={{ opacity: 0, x: -10 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.5, delay: 0.4 }}
+            className="text-xs font-semibold uppercase tracking-wider text-black/60"
+          >
+          
+          </motion.span>
         </div>
         <h2 className="text-3xl md:text-4xl font-bold text-center text-gray-900 mb-3">
           GPT-5 PRD Prompt Generator

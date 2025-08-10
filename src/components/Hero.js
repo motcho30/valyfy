@@ -35,7 +35,7 @@ const Hero = ({ onNavigateToFeature }) => {
           All-in-one<br />vibe coding toolkit
           </h1>
           <p className="text-xl md:text-2xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
-            Transform your ideas into high-quality apps with AI. From concept to deployment—build faster, ship smarter.
+            Describe your app idea and get AI-ready prompts for ChatGPT, Lovable, Cursor, and more.
           </p>
           
           <motion.div 

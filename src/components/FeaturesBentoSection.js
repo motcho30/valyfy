@@ -37,7 +37,7 @@ const FeaturesBentoSection = ({ onNavigateToFeature }) => {
     {
       Icon: Code,
       name: "Instant Project Foundation",
-      description: "Generate custom cursor.config rules, PRDs, and design specs tailored to your exact stack. Skip the boring setup, and jump straight to building.",
+      description: "Download professionally crafted cursor.config rules, PRDs, and design specs for web and mobile development. Skip the boring setup, and jump straight to building.",
       href: "#",
       cta: "Get Started",
       background: null,
