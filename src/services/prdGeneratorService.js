@@ -25,7 +25,7 @@ const buildPRDPrompt = (appIdea, selectedFeatures, selectedDesign, uiSection) =>
          `- Use placeholder/example data for all dynamic elements.\n` +
          (selectedDesign?.name ? `- Additional Design Theme: ${selectedDesign.name}\n` : '') +
          (uiSection || '') +
-         `\n## PRD Sections\n1. Overview (2–3 sentences)\n2. Problem Statement (brief)\n3. Target Users\n4. Core Functional Requirements (MVP)\n5. Data Model / Schema (minimal)\n6. Platform Pages & Navigation\n7. Example Data / Defaults\n\n` +
+         `\n## PRD Sections\n1. Overview (detailed description of the app idea)\n2. Target Audience\n3. UX and UI Guidelines\n4. User Flows\n5. Pages\n6. Features\n\n` +
          `Return the full PRD in markdown format only.`;
 };
 
