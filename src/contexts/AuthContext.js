@@ -132,6 +132,29 @@ export const AuthProvider = ({ children }) => {
     }
   }
 
+  const resetPassword = async (email) => {
+    try {
+      setError(null)
+      console.log('🔐 Attempting password reset for:', email)
+      
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/reset-password`
+      })
+      
+      if (error) {
+        console.error('❌ Password reset error:', error)
+        throw error
+      }
+      
+      console.log('✅ Password reset email sent successfully')
+      return { error: null }
+    } catch (error) {
+      console.error('💥 Password reset exception:', error)
+      setError(error.message)
+      return { error }
+    }
+  }
+
   const updateProfile = async (updates) => {
     try {
       setError(null)
@@ -155,6 +178,7 @@ export const AuthProvider = ({ children }) => {
     signUp,
     signIn,
     signOut,
+    resetPassword,
     updateProfile,
     isAuthenticated: !!user
   }

@@ -4,12 +4,13 @@ import { Eye, EyeOff, Mail, Lock } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
 const AuthModal = ({ isOpen, onClose, defaultMode = 'signup' }) => {
-  const { signUp, signIn, isAuthenticated, loading, error } = useAuth();
+  const { signUp, signIn, isAuthenticated, loading, error, resetPassword } = useAuth();
   const [mode, setMode] = useState(defaultMode); // 'signup' | 'signin'
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [localError, setLocalError] = useState(null);
+  const [resetEmailSent, setResetEmailSent] = useState(false);
 
   useEffect(() => {
     if (isAuthenticated && isOpen) {
@@ -30,6 +31,25 @@ const AuthModal = ({ isOpen, onClose, defaultMode = 'signup' }) => {
       }
     } catch (e) {
       setLocalError(e.message || 'Authentication failed');
+    }
+  };
+
+  const handleForgotPassword = async () => {
+    if (!email) {
+      setLocalError('Please enter your email address first');
+      return;
+    }
+    
+    setLocalError(null);
+    try {
+      const { error } = await resetPassword(email);
+      if (error) {
+        setLocalError(error.message || 'Failed to send reset email');
+      } else {
+        setResetEmailSent(true);
+      }
+    } catch (e) {
+      setLocalError(e.message || 'Password reset failed');
     }
   };
 
@@ -92,11 +112,26 @@ const AuthModal = ({ isOpen, onClose, defaultMode = 'signup' }) => {
                     {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
                 </div>
+                {mode === 'signin' && (
+                  <button
+                    type="button"
+                    onClick={handleForgotPassword}
+                    className="text-xs text-slate-500 hover:text-slate-700 mt-1 block"
+                  >
+                    Forgot your password?
+                  </button>
+                )}
               </div>
 
               {(localError || error) && (
                 <div className="bg-red-50 border border-red-200 rounded-lg p-2 text-xs text-red-600">
                   {localError || error}
+                </div>
+              )}
+
+              {resetEmailSent && (
+                <div className="bg-green-50 border border-green-200 rounded-lg p-2 text-xs text-green-600">
+                  Password reset email sent! Check your inbox and follow the instructions.
                 </div>
               )}
 

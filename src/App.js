@@ -7,6 +7,7 @@ import Dashboard from './components/Dashboard';
 import ProjectCreationFlow from './components/ProjectCreationFlow';
 import ProjectDetail from './components/ProjectDetail';
 import Auth from './components/Auth';
+import ResetPassword from './components/ResetPassword';
 import DatabaseSetup from './components/DatabaseSetup';
 import CursorTips from './components/CursorTips';
 import DesignInspiration from './components/DesignInspiration';
@@ -589,6 +590,7 @@ function AppContent() {
             <DesignInspiration onNavigateToFeature={handleNavigateToFeature} />
         } />
         <Route path="/auth" element={<Auth />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="*" element={<div>Not Found</div>} />
       </Routes>
       

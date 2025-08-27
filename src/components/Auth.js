@@ -22,7 +22,8 @@ const Auth = ({ onClose, redirectTo, defaultMode = 'signin' }) => {
     username: ''
   })
   
-  const { signUp, signIn, loading, error } = useAuth()
+  const { signUp, signIn, loading, error, resetPassword } = useAuth()
+  const [resetEmailSent, setResetEmailSent] = useState(false)
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -74,6 +75,26 @@ const Auth = ({ onClose, redirectTo, defaultMode = 'signin' }) => {
       }
     } catch (err) {
       console.error('💥 Auth exception:', err)
+    }
+  }
+
+  const handleForgotPassword = async () => {
+    if (!formData.email) {
+      // You could add a toast or error message here
+      console.log('Please enter your email address first')
+      return
+    }
+    
+    try {
+      const { error } = await resetPassword(formData.email)
+      if (error) {
+        console.error('Password reset error:', error)
+      } else {
+        setResetEmailSent(true)
+        console.log('Password reset email sent successfully')
+      }
+    } catch (err) {
+      console.error('Password reset exception:', err)
     }
   }
 
@@ -190,11 +211,28 @@ const Auth = ({ onClose, redirectTo, defaultMode = 'signin' }) => {
                   {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                 </button>
               </div>
+              {!isSignUp && (
+                <button
+                  type="button"
+                  onClick={handleForgotPassword}
+                  className="text-sm text-black/60 hover:text-black/80 transition-colors"
+                >
+                  Forgot your password?
+                </button>
+              )}
             </div>
 
             {error && (
               <div className="bg-red-50 border border-red-200 rounded-xl p-4">
                 <p className="text-red-600 text-sm">{error}</p>
+              </div>
+            )}
+
+            {resetEmailSent && (
+              <div className="bg-green-50 border border-green-200 rounded-xl p-4">
+                <p className="text-green-600 text-sm">
+                  ✅ Password reset email sent! Check your inbox and follow the instructions.
+                </p>
               </div>
             )}
 
