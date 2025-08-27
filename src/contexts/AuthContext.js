@@ -137,8 +137,17 @@ export const AuthProvider = ({ children }) => {
       setError(null)
       console.log('🔐 Attempting password reset for:', email)
       
+      // Use deployed URL for password reset
+      // In production, this should be your actual deployed domain
+      const deployedUrl = process.env.REACT_APP_FRONTEND_URL || 
+                         (window.location.hostname === 'localhost' ? 'https://www.valycode.com' : 
+                          window.location.hostname === 'www.valycode.com' ? 'https://www.valycode.com' : 
+                          window.location.origin);
+      
+      console.log('🔗 Password reset redirect URL:', deployedUrl);
+      
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/reset-password`
+        redirectTo: `${deployedUrl}/reset-password`
       })
       
       if (error) {
