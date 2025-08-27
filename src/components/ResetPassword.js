@@ -16,24 +16,28 @@ const ResetPassword = () => {
   const [success, setSuccess] = useState(false);
 
   useEffect(() => {
-    // Check if we have the necessary tokens from the reset email
+    // Check if we have the necessary parameters from the reset email
     const accessToken = searchParams.get('access_token');
     const refreshToken = searchParams.get('refresh_token');
     const type = searchParams.get('type');
     
-    // Supabase password reset typically includes these parameters
+    console.log('Reset password URL params:', { type, hasAccessToken: !!accessToken, hasRefreshToken: !!refreshToken });
+    
+    // For Supabase password reset with type=recovery, we don't need to validate tokens upfront
+    // The actual validation happens when updateUser is called
     if (type === 'recovery') {
-      // This is a password reset flow, we don't need to set a session yet
-      console.log('Password reset flow detected');
+      console.log('Password reset flow detected - ready for password update');
       return;
     }
     
+    // Only check for tokens if it's not a recovery flow
     if (!accessToken || !refreshToken) {
+      console.log('No access/refresh tokens found for non-recovery flow');
       setError('Invalid or expired reset link. Please request a new password reset.');
       return;
     }
 
-    // Set the session with the tokens from the reset email
+    // Set the session with the tokens from the reset email (for non-recovery flows)
     const setSession = async () => {
       try {
         const { error } = await supabase.auth.setSession({
@@ -42,9 +46,11 @@ const ResetPassword = () => {
         });
         
         if (error) {
+          console.error('Session validation error:', error);
           setError('Failed to validate reset link. Please request a new password reset.');
         }
       } catch (err) {
+        console.error('Session validation exception:', err);
         setError('Failed to validate reset link. Please request a new password reset.');
       }
     };
@@ -69,13 +75,40 @@ const ResetPassword = () => {
     setError(null);
 
     try {
+      const type = searchParams.get('type');
+      const accessToken = searchParams.get('access_token');
+      const refreshToken = searchParams.get('refresh_token');
+
+      // For recovery flow, we might need to set the session first
+      if (type === 'recovery' && accessToken && refreshToken) {
+        console.log('Setting session for recovery flow before password update');
+        const { error: sessionError } = await supabase.auth.setSession({
+          access_token: accessToken,
+          refresh_token: refreshToken,
+        });
+        
+        if (sessionError) {
+          console.error('Failed to set session for recovery:', sessionError);
+          setError('Reset link has expired. Please request a new password reset.');
+          return;
+        }
+      }
+
+      console.log('Attempting to update password...');
       const { error } = await supabase.auth.updateUser({
         password: password
       });
 
       if (error) {
-        setError(error.message || 'Failed to update password');
+        console.error('Password update error:', error);
+        // Provide more specific error messages
+        if (error.message.includes('session_not_found') || error.message.includes('invalid_token')) {
+          setError('Reset link has expired. Please request a new password reset.');
+        } else {
+          setError(error.message || 'Failed to update password');
+        }
       } else {
+        console.log('Password updated successfully');
         setSuccess(true);
         // Redirect to dashboard after a short delay
         setTimeout(() => {
@@ -83,6 +116,7 @@ const ResetPassword = () => {
         }, 2000);
       }
     } catch (err) {
+      console.error('Password update exception:', err);
       setError('Failed to update password. Please try again.');
     } finally {
       setLoading(false);
